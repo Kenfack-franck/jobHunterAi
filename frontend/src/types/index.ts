@@ -199,7 +199,7 @@ export interface ProfileUpdate {
 
 export interface JobOffer {
   id: string;
-  user_id: string;
+  user_id?: string;  // Optionnel : présent seulement si l'offre est sauvegardée
   company_name?: string;
   job_title: string;
   location?: string;

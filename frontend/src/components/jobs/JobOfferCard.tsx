@@ -118,8 +118,8 @@ export function JobOfferCard({ job, onClick, onEdit, onDelete, onAnalyze, onSave
 
         {/* Actions */}
         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-          {/* Bouton Sauvegarder - uniquement pour offres scrapées non sauvegardées */}
-          {onSave && job.source === "scraping" && (
+          {/* Bouton Sauvegarder - uniquement pour offres non sauvegardées (offres scrapées sans user_id) */}
+          {onSave && !job.user_id && job.source_platform && job.source_platform !== "manual" && (
             <Button 
               variant="outline" 
               size="sm" 
