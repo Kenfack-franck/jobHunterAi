@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: jobhunter-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jobhunter_db}
+      POSTGRES_USER: ${POSTGRES_USER:-jobhunter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - jobhunter_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobhunter"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: jobhunter-redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - jobhunter_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backend FastAPI
+  backend:
+    image: ${CI_REGISTRY_IMAGE}/backend:${IMAGE_TAG:-latest}
+    container_name: jobhunter-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - RAPIDAPI_KEY=${RAPIDAPI_KEY:-}
+      - ADZUNA_APP_ID=${ADZUNA_APP_ID:-test}
+      - ADZUNA_APP_KEY=${ADZUNA_APP_KEY:-test}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - ENVIRONMENT=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - jobhunter_internal
+      - web_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  celery:
+    image: ${CI_REGISTRY_IMAGE}/backend:${IMAGE_TAG:-latest}
+    container_name: jobhunter-celery
+    restart: always
+    command: celery -A app.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - RAPIDAPI_KEY=${RAPIDAPI_KEY:-}
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - jobhunter_internal
+
+  # Frontend Next.js
+  frontend:
+    image: ${CI_REGISTRY_IMAGE}/frontend:${IMAGE_TAG:-latest}
+    container_name: jobhunter-frontend
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.jobhunter.franckkenfack.works
+    depends_on:
+      - backend
+    networks:
+      - web_net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  jobhunter_internal:
+    driver: bridge
+  web_net:
+    external: true
+
+volumes:
+  postgres_data:
+  redis_data:

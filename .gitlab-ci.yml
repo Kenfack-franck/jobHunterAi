@@ -1,0 +1,84 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# Build Frontend
+build_frontend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd frontend
+    - docker build 
+        --build-arg NEXT_PUBLIC_API_URL=https://api.jobhunter.franckkenfack.works 
+        -f Dockerfile.prod 
+        -t $CI_REGISTRY_IMAGE/frontend:latest 
+        .
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - main
+
+# Build Backend
+build_backend:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd backend
+    - docker build 
+        -f Dockerfile.prod 
+        -t $CI_REGISTRY_IMAGE/backend:latest 
+        .
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+  only:
+    - main
+
+# Déploiement
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SSH_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "🚀 Déploiement Job Hunter AI..."
+    # Créer fichier .env sur le serveur
+    - |
+      ssh $SSH_USER@$SSH_IP "cat > ~/jobhunter/.env << 'EOFENV'
+      POSTGRES_DB=jobhunter_db
+      POSTGRES_USER=jobhunter
+      POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      SECRET_KEY=$SECRET_KEY
+      OPENAI_API_KEY=$OPENAI_API_KEY
+      GEMINI_API_KEY=$GEMINI_API_KEY
+      RAPIDAPI_KEY=$RAPIDAPI_KEY
+      CORS_ORIGINS=https://jobhunter.franckkenfack.works
+      CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
+      IMAGE_TAG=latest
+      EOFENV"
+    # Pull et démarrage
+    - ssh $SSH_USER@$SSH_IP "
+        cd ~/jobhunter &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        docker compose -f docker-compose.prod.yml pull &&
+        docker compose -f docker-compose.prod.yml up -d --remove-orphans
+      "
+  only:
+    - main
+  environment:
+    name: production
+    url: https://jobhunter.franckkenfack.works
