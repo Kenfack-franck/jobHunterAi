@@ -72,7 +72,7 @@ export default function DocumentsPage() {
     toast.info('Régénération (feature en développement)');
   };
 
-  const handleDelete = async (docId: number, filename?: string) => {
+  const handleDelete = async (docId: string, filename?: string) => {
     if (!confirm(`Supprimer ${filename || 'ce document'} ?`)) return;
 
     try {

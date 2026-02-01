@@ -9,7 +9,7 @@
 export interface User {
   id: string;
   email: string;
-  full_name: string | null;
+  full_name?: string | null;
   language: string;
   is_active: boolean;
   created_at: string;
@@ -204,6 +204,7 @@ export interface JobOffer {
   job_title: string;
   location?: string;
   job_type?: string;
+  work_mode?: string;  // "remote", "hybrid", "onsite"
   description?: string;
   requirements?: string;
   source_url?: string;
@@ -219,6 +220,7 @@ export interface JobOfferCreate {
   company_name?: string;
   location?: string;
   job_type?: string;
+  work_mode?: string;
   description?: string;
   requirements?: string;
   source_url?: string;
@@ -231,6 +233,7 @@ export interface JobOfferUpdate {
   company_name?: string;
   location?: string;
   job_type?: string;
+  work_mode?: string;
   description?: string;
   requirements?: string;
   source_url?: string;

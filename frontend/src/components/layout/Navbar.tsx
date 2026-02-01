@@ -43,14 +43,14 @@ export function Navbar() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
           </Button>
 
           {/* Help */}
           <Link href="/help">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="sm">
               <HelpCircle className="h-5 w-5" />
             </Button>
           </Link>

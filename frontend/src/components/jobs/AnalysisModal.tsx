@@ -15,7 +15,7 @@ interface AnalysisModalProps {
   onOpenChange: (open: boolean) => void;
   jobId: string;
   jobTitle: string;
-  companyName: string;
+  companyName?: string;
 }
 
 export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName }: AnalysisModalProps) {

@@ -54,7 +54,11 @@ export default function DocumentGenerator({
 
   const loadStats = async () => {
     try {
-      const data = await getDocumentStats();
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+      const data = await getDocumentStats(token);
       setStats(data);
     } catch (error) {
       console.error("Erreur chargement stats:", error);
@@ -73,13 +77,18 @@ export default function DocumentGenerator({
     setGeneratedDoc(null);
 
     try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+      
       const doc = await generateDocument({
         job_offer_id: jobOfferId,
         document_type: documentType,
         tone,
         language,
         length: documentType === "cover_letter" ? length : undefined,
-      });
+      }, token);
 
       setGeneratedDoc(doc);
       toast.success(`${documentType === "resume" ? "CV" : "Lettre"} généré avec succès !`);
@@ -291,14 +300,6 @@ export default function DocumentGenerator({
           {/* Métadonnées */}
           <div className="flex gap-4 text-sm text-gray-600">
             <span>📏 {generatedDoc.content.length} caractères</span>
-            <span>
-              🤖{" "}
-              {generatedDoc.generation_params?.provider === "gemini"
-                ? "Gemini AI"
-                : generatedDoc.generation_params?.provider === "openai"
-                ? "OpenAI"
-                : "Template"}
-            </span>
             <span>
               🕐{" "}
               {new Date(generatedDoc.generated_at).toLocaleString("fr-FR", {

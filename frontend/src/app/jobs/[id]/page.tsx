@@ -96,11 +96,6 @@ export default function JobDetailPage() {
               {job.job_type && (
                 <Badge variant="secondary">📋 {job.job_type}</Badge>
               )}
-              {job.salary_min && job.salary_max && (
-                <Badge variant="secondary">
-                  💰 {job.salary_min}€ - {job.salary_max}€
-                </Badge>
-              )}
             </div>
 
             {job.description && (
@@ -110,22 +105,18 @@ export default function JobDetailPage() {
               </div>
             )}
 
-            {job.requirements && job.requirements.length > 0 && (
+            {job.requirements && (
               <div>
                 <h3 className="font-semibold mb-2">Compétences requises</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {job.requirements.map((req, idx) => (
-                    <Badge key={idx} variant="outline">{req}</Badge>
-                  ))}
-                </div>
+                <p className="text-gray-700 whitespace-pre-wrap">{job.requirements}</p>
               </div>
             )}
 
-            {job.keywords && job.keywords.length > 0 && (
+            {job.extracted_keywords && job.extracted_keywords.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-2">Mots-clés</h3>
                 <div className="flex gap-2 flex-wrap">
-                  {job.keywords.map((keyword, idx) => (
+                  {job.extracted_keywords.map((keyword, idx) => (
                     <Badge key={idx} variant="default">
                       {keyword}
                     </Badge>
