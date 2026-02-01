@@ -10,6 +10,8 @@ import { documentsService, Document } from "@/lib/documentsService";
 import profileService from "@/lib/profile";
 import { Profile } from "@/types";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 interface AnalysisModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,7 +51,7 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
     setLoadingScore(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8000/api/v1/jobs/${jobId}/compatibility/${selectedProfileId}`, {
+      const response = await fetch(`${API_URL}/jobs/${jobId}/compatibility/${selectedProfileId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
