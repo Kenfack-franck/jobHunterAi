@@ -90,13 +90,14 @@ services:
     networks:
       - jobhunter_internal
 
+
   # Frontend Next.js
   frontend:
     image: ${CI_REGISTRY_IMAGE}/frontend:${IMAGE_TAG:-latest}
     container_name: jobhunter-frontend
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=https://api.jobhunter.franckkenfack.works
+      - NEXT_PUBLIC_API_URL=https://api.jobhunter.franckkenfack.works/api/v1
     depends_on:
       - backend
     networks:
