@@ -22,7 +22,7 @@ export function Footer() {
             <h4 className="font-semibold mb-3">Support</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/profile" className="text-gray-600 hover:text-primary">Mon profil</Link></li>
-              <li><a href="mailto:support@jobhunterai.com" className="text-gray-600 hover:text-primary">Contact</a></li>
+              <li><Link href="/contact" className="text-gray-600 hover:text-primary">Contact</Link></li>
             </ul>
           </div>
           <div>
@@ -34,7 +34,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t text-center text-sm text-gray-600">
-          <p>© {new Date().getFullYear()} Job Hunter AI. Développé avec ❤️ par votre équipe</p>
+          <p>© {new Date().getFullYear()} Job Hunter AI. Développé avec ❤️ par <Link href="/contact" className="text-primary hover:underline">Franck Ulrich Kenfack</Link></p>
         </div>
       </div>
     </footer>

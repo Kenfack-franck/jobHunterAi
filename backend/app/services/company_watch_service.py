@@ -100,8 +100,12 @@ class CompanyWatchService:
         
         await self.db.commit()
         
-        # Lancer un scraping immédiat pour cette entreprise (optionnel)
-        # await self._scrape_company_offers(company)
+        # Lancer un scraping immédiat pour cette entreprise
+        try:
+            await self._scrape_company_offers(company)
+        except Exception as e:
+            # Ne pas bloquer si le scraping échoue
+            print(f"[WATCH] Erreur scraping immédiat pour {company_name}: {e}")
         
         return {
             "success": True,

@@ -18,8 +18,8 @@ export interface CreateCompanyWatchRequest {
 class CompaniesService {
   async getWatchedCompanies(): Promise<WatchedCompany[]> {
     const response = await apiClient.get('/watch/companies');
-    // L'API peut retourner {companies: [...]} ou directement [...]
-    return Array.isArray(response.data) ? response.data : (response.data.companies || []);
+    // L'API retourne {watches: [...], total: X, ...}
+    return response.data.watches || [];
   }
 
   async addCompanyWatch(data: CreateCompanyWatchRequest): Promise<WatchedCompany> {
