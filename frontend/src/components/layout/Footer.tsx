@@ -13,27 +13,28 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-3">Produit</h4>
             <ul className="space-y-2 text-sm">
-              <li><span className="text-gray-400 cursor-not-allowed">Fonctionnalités</span></li>
-              <li><span className="text-gray-400 cursor-not-allowed">Tarifs</span></li>
+              <li><Link href="/jobs" className="text-gray-600 hover:text-primary">Recherche d'emploi</Link></li>
+              <li><Link href="/companies/watch" className="text-gray-600 hover:text-primary">Veille entreprise</Link></li>
+              <li><Link href="/documents" className="text-gray-600 hover:text-primary">Documents générés</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-3">Support</h4>
             <ul className="space-y-2 text-sm">
-              <li><span className="text-gray-400 cursor-not-allowed">Aide</span></li>
+              <li><Link href="/profile" className="text-gray-600 hover:text-primary">Mon profil</Link></li>
               <li><a href="mailto:support@jobhunterai.com" className="text-gray-600 hover:text-primary">Contact</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold mb-3">Légal</h4>
+            <h4 className="font-semibold mb-3">Ressources</h4>
             <ul className="space-y-2 text-sm">
-              <li><span className="text-gray-400 cursor-not-allowed">Confidentialité</span></li>
-              <li><span className="text-gray-400 cursor-not-allowed">CGU</span></li>
+              <li><a href="https://github.com/yourusername/jobhunter" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary">GitHub</a></li>
+              <li><Link href="/applications" className="text-gray-600 hover:text-primary">Mes candidatures</Link></li>
             </ul>
           </div>
         </div>
         <div className="mt-8 pt-6 border-t text-center text-sm text-gray-600">
-          <p>© {new Date().getFullYear()} Job Hunter AI. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} Job Hunter AI. Développé avec ❤️ par votre équipe</p>
         </div>
       </div>
     </footer>
