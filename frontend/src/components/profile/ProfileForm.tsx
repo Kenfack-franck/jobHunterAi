@@ -13,17 +13,18 @@ interface ProfileFormProps {
   onSubmit: (data: ProfileCreate | ProfileUpdate) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
+  initialData?: any; // Données du CV parsé
 }
 
-export function ProfileForm({ profile, onSubmit, onCancel, isLoading = false }: ProfileFormProps) {
+export function ProfileForm({ profile, onSubmit, onCancel, isLoading = false, initialData }: ProfileFormProps) {
   const [formData, setFormData] = useState<ProfileCreate | ProfileUpdate>({
-    title: profile?.title || '',
-    summary: profile?.summary || '',
-    location: profile?.location || '',
-    phone: profile?.phone || '',
-    linkedin_url: profile?.linkedin_url || '',
-    github_url: profile?.github_url || '',
-    portfolio_url: profile?.portfolio_url || '',
+    title: initialData?.title || profile?.title || '',
+    summary: initialData?.summary || profile?.summary || '',
+    location: initialData?.location || profile?.location || '',
+    phone: initialData?.phone || profile?.phone || '',
+    linkedin_url: initialData?.linkedin_url || profile?.linkedin_url || '',
+    github_url: initialData?.github_url || profile?.github_url || '',
+    portfolio_url: initialData?.portfolio_url || profile?.portfolio_url || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
