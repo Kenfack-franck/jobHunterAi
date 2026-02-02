@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional
 from fastapi import UploadFile
 from app.services.ai_service import AIService
 import logging
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +54,12 @@ class CVParserService:
             # Lire le contenu du fichier
             contents = await pdf_file.read()
             
+            # Créer un objet BytesIO pour pdfplumber
+            pdf_bytes = BytesIO(contents)
+            
             # Parser avec pdfplumber
             text_parts = []
-            with pdfplumber.open(contents) as pdf:
+            with pdfplumber.open(pdf_bytes) as pdf:
                 for page in pdf.pages:
                     page_text = page.extract_text()
                     if page_text:

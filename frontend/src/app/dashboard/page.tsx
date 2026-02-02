@@ -15,12 +15,14 @@ export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    // Check if user has completed onboarding
+    // Check if user has completed onboarding AND has a profile
     const onboardingCompleted = localStorage.getItem('onboarding_completed');
-    if (!onboardingCompleted) {
+    
+    // Show onboarding if: not completed OR no profile yet
+    if (!onboardingCompleted && !hasProfile) {
       setShowOnboarding(true);
     }
-  }, []);
+  }, [hasProfile]);
 
   return (
     <ProtectedRoute>
