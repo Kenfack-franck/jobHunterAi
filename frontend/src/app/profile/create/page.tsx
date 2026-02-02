@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import profileService from "@/lib/profile";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { CVUpload } from "@/components/profile/CVUpload";
+import { CVReview } from "@/components/profile/CVReview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FileUp, PenSquare, ArrowLeft } from "lucide-react";
@@ -12,8 +13,8 @@ export default function CreateProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<'choice' | 'upload' | 'manual'>('choice');
-  const [initialData, setInitialData] = useState<any>(null);
+  const [mode, setMode] = useState<'choice' | 'upload' | 'review' | 'manual'>('choice');
+  const [parsedData, setParsedData] = useState<any>(null);
 
   // Support URL parameter from onboarding
   useEffect(() => {
@@ -36,8 +37,12 @@ export default function CreateProfilePage() {
   };
 
   const handleCVParsed = (data: any) => {
-    setInitialData(data);
-    setMode('manual'); // Passer au formulaire pré-rempli
+    setParsedData(data);
+    setMode('review'); // Passer à la page de revue
+  };
+
+  const handleReviewConfirm = async (editedData: any) => {
+    await handleSubmit(editedData);
   };
 
   // Écran de choix
@@ -168,38 +173,50 @@ export default function CreateProfilePage() {
   }
 
   // Écran formulaire (mode='manual')
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <Button
-          variant="ghost"
-          onClick={() => {
-            setInitialData(null);
-            setMode('choice');
-          }}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour au choix
-        </Button>
+  if (mode === 'manual') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setParsedData(null);
+              setMode('choice');
+            }}
+            className="mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour au choix
+          </Button>
 
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">
-            {initialData ? 'Vérifiez vos informations' : 'Créer votre profil'}
-          </h1>
-          {initialData && (
-            <p className="text-green-600 font-medium">
-              ✅ CV analysé ! Vérifiez les informations extraites avant de sauvegarder.
-            </p>
-          )}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Créer votre profil</h1>
+            <p className="text-gray-600">Remplissez vos informations professionnelles</p>
+          </div>
+
+          <ProfileForm 
+            onSubmit={handleSubmit} 
+            isLoading={isLoading}
+          />
         </div>
-
-        <ProfileForm 
-          onSubmit={handleSubmit} 
-          isLoading={isLoading}
-          initialData={initialData}
-        />
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Écran de revue (mode='review')
+  if (mode === 'review' && parsedData) {
+    return (
+      <CVReview 
+        parsedData={parsedData}
+        onConfirm={handleReviewConfirm}
+        onCancel={() => {
+          setParsedData(null);
+          setMode('choice');
+        }}
+      />
+    );
+  }
+
+  // Par défaut, retour au choix
+  return null;
 }
