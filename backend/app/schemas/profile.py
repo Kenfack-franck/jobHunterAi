@@ -102,6 +102,14 @@ class EducationBase(BaseModel):
     end_date: Optional[Union[date, str]] = None
     description: Optional[str] = None
     
+    @field_validator('institution', mode='before')
+    @classmethod
+    def validate_institution(cls, v):
+        """Si institution est None, mettre une valeur par défaut"""
+        if v is None or (isinstance(v, str) and v.strip() == ''):
+            return "Non spécifié"
+        return v
+    
     @field_validator('start_date', 'end_date', mode='before')
     @classmethod
     def parse_date(cls, v):
@@ -162,13 +170,21 @@ class EducationResponse(EducationBase):
 class ExperienceBase(BaseModel):
     """Schéma de base pour une expérience professionnelle"""
     title: str = Field(..., min_length=1, max_length=200)
-    company: str = Field(..., min_length=1, max_length=200)
+    company: str = Field(..., min_length=1, max_length=200, description="Nom de l'entreprise ou organisation")
     location: Optional[str] = Field(None, max_length=200)
     start_date: Union[date, str]
     end_date: Optional[Union[date, str]] = None
     current: bool = False
     description: Optional[str] = None
     technologies: Optional[List[str]] = Field(default_factory=list)
+    
+    @field_validator('company', mode='before')
+    @classmethod
+    def validate_company(cls, v):
+        """Si company est None, mettre une valeur par défaut"""
+        if v is None or (isinstance(v, str) and v.strip() == ''):
+            return "Non spécifié"
+        return v
     
     @field_validator('start_date', 'end_date', mode='before')
     @classmethod

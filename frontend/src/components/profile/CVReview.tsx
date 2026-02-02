@@ -286,14 +286,20 @@ export function CVReview({ parsedData, onConfirm, onCancel }: CVReviewProps) {
           <CardContent>
             {data.skills && data.skills.length > 0 ? (
               <div className="space-y-4">
-                {/* Grouper par catégorie */}
-                {['Technique', 'Soft Skills', 'Langues', 'Outils'].map(category => {
-                  const categorySkills = data.skills.filter((s: any) => s.category === category);
+                {/* Grouper par catégorie - en anglais maintenant */}
+                {[
+                  { key: 'language', label: 'Langages' },
+                  { key: 'framework', label: 'Frameworks' },
+                  { key: 'tool', label: 'Outils' },
+                  { key: 'soft_skill', label: 'Soft Skills' },
+                  { key: 'other', label: 'Autres' }
+                ].map(({ key, label }) => {
+                  const categorySkills = data.skills.filter((s: any) => s.category === key);
                   if (categorySkills.length === 0) return null;
                   
                   return (
-                    <div key={category}>
-                      <h4 className="font-semibold mb-2">{category}</h4>
+                    <div key={key}>
+                      <h4 className="font-semibold mb-2">{label}</h4>
                       <div className="flex flex-wrap gap-2">
                         {categorySkills.map((skill: any, index: number) => {
                           const globalIndex = data.skills.indexOf(skill);
@@ -305,7 +311,12 @@ export function CVReview({ parsedData, onConfirm, onCancel }: CVReviewProps) {
                             >
                               {skill.name}
                               {skill.level && (
-                                <span className="text-xs opacity-70">({skill.level})</span>
+                                <span className="text-xs opacity-70">
+                                  ({skill.level === 'beginner' ? 'Débutant' : 
+                                    skill.level === 'intermediate' ? 'Intermédiaire' :
+                                    skill.level === 'advanced' ? 'Avancé' : 
+                                    skill.level === 'expert' ? 'Expert' : skill.level})
+                                </span>
                               )}
                               <button
                                 onClick={() => removeSkill(globalIndex)}
