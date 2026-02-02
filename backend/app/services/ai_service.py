@@ -39,6 +39,34 @@ class AIService:
         if not self.openai_client and not self.gemini_model:
             print("⚠️  Mode TEMPLATES uniquement (aucune API IA disponible)")
     
+    async def generate_text(self, prompt: str, max_tokens: int = 2000) -> str:
+        """
+        Génère du texte avec IA (OpenAI ou Gemini)
+        Utilisé pour le parsing de CV et autres tâches génériques
+        """
+        # Essayer OpenAI d'abord
+        if self.openai_client:
+            try:
+                response = await self.openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=max_tokens,
+                    temperature=0.3
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                print(f"❌ OpenAI failed: {e}")
+        
+        # Fallback Gemini
+        if self.gemini_model:
+            try:
+                response = self.gemini_model.generate_content(prompt)
+                return response.text
+            except Exception as e:
+                print(f"❌ Gemini failed: {e}")
+        
+        raise Exception("Aucun service IA disponible pour générer du texte")
+    
     async def generate_resume(
         self,
         profile: Profile,

@@ -2,6 +2,7 @@
 Service pour parser les CV PDF et extraire les informations structurées
 """
 import pdfplumber
+import json
 from typing import Dict, Any, Optional
 from fastapi import UploadFile
 from app.services.ai_service import AIService
@@ -140,9 +141,6 @@ CV À ANALYSER:
             # Appeler l'IA avec le prompt
             response = await self.ai_service.generate_text(prompt)
             
-            # Parser la réponse JSON
-            import json
-            
             # Nettoyer la réponse (parfois l'IA ajoute des backticks)
             clean_response = response.strip()
             if clean_response.startswith("```json"):
@@ -167,7 +165,10 @@ CV À ANALYSER:
             
         except json.JSONDecodeError as e:
             logger.error(f"Erreur parsing JSON: {e}")
-            logger.error(f"Réponse IA: {response[:500]}")
+            try:
+                logger.error(f"Réponse IA: {response[:500]}")
+            except:
+                logger.error("Impossible d'afficher la réponse IA")
             raise ValueError("L'IA n'a pas retourné un JSON valide")
         except Exception as e:
             logger.error(f"Erreur analyse IA: {e}")
