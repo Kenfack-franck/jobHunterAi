@@ -7,12 +7,39 @@
 **Solution :**
 - Créé `ContactModal.tsx` réutilisable avec formulaire + informations personnelles
 - Modal accessible depuis footer (2 endroits) même si déconnecté
+- **Intégré dans landing page footer** pour utilisateurs non connectés
 - Plus besoin de page `/contact` dédiée
 - Design responsive avec grid 2 colonnes (infos + formulaire)
 
 **Fichiers modifiés :**
 - `frontend/src/components/contact/ContactModal.tsx` (nouveau)
-- `frontend/src/components/layout/Footer.tsx` (intégration modal)
+- `frontend/src/components/layout/Footer.tsx` (footer connecté)
+- `frontend/src/app/page.tsx` (footer landing page)
+
+---
+
+### 2. ✅ Modal détails d'offre avec toutes les options
+**Problème :** Cards trop petites, impossible de voir tous les détails avant sauvegarde  
+**Solution :**
+- Créé `JobDetailsModal.tsx` avec vue complète de l'offre
+- Affiche: description, exigences, compétences, salaire, localisation, etc.
+- Boutons actions intégrés : Postuler, Analyser, Sauvegarder
+- Badge "Sauvegardée" si déjà en base
+- Design responsive avec scroll vertical si contenu long
+
+**Workflow utilisateur amélioré :**
+1. Recherche offres
+2. Clic "👁 Voir détails" sur card
+3. Modal s'ouvre avec **toutes les infos**
+4. Peut analyser compatibilité AVANT de sauvegarder ✅
+5. Peut postuler directement sur le site source
+6. Peut sauvegarder si intéressé
+
+**Fichiers créés :**
+- `frontend/src/components/jobs/JobDetailsModal.tsx`
+
+**Fichiers modifiés :**
+- `frontend/src/app/jobs/page.tsx` (intégration modal + handlers)
 
 ---
 
@@ -126,8 +153,10 @@ SMTP_FROM_NAME=Job Hunter AI
 
 ### Frontend
 - **Nouveau composant :** CVUpload (drag & drop)
-- **Nouveau modal :** ContactModal
+- **Nouveau modal :** ContactModal (landing + dashboard)
+- **Nouveau modal :** JobDetailsModal (vue complète offre)
 - **Workflow amélioré :** Profile création 3 modes
+- **Workflow amélioré :** Voir détails → Analyser → Sauvegarder (optionnel)
 - **Navigation :** Retour accueil depuis auth pages
 
 ### DevOps
@@ -138,28 +167,34 @@ SMTP_FROM_NAME=Job Hunter AI
 
 ## 🚀 Prochaines étapes
 
+### ✅ Terminé dans ce sprint
+1. ✅ Modal contact accessible partout (landing + dashboard)
+2. ✅ Modal détails d'offre avec toutes les options
+3. ✅ Analyse possible AVANT sauvegarde (via modal détails)
+4. ✅ CV Parser intégré avec OnboardingWizard
+5. ✅ SMTP configuré en production
+6. ✅ CI/CD optimisé
+
 ### Priorité 1 : Test & Déploiement
-1. ✅ Tester CV parser end-to-end avec PDF réel
+1. Tester modals en local (voir `TEST_MODAL_FEATURES.md`)
 2. Push vers GitLab : `git push origin main`
 3. Vérifier pipeline ne rebuild que changements
-4. Tester SMTP en production après redeploy
+4. Tester en production après déploiement
 
-### Priorité 2 : Analyse avant sauvegarde
-**Demande utilisateur :** Analyser compatibilité AVANT de sauvegarder offre
-- Actuellement : Doit sauvegarder → Analyser → Voir score
-- Souhaité : Voir score → Décider de sauvegarder ou skip
-- **Solution :** Passer profil aux offres non-sauvegardées pour analyse temporaire
-
-### Priorité 3 : Tests utilisateurs
-- Onboarding avec upload CV
-- Modal contact accessible partout
-- Voir détails offres → Analyser → Sauvegarder
+### Priorité 2 : Améliorations futures
+- Dashboard avec statistiques offres sauvegardées
+- Filtres avancés recherche (salaire, remote, etc.)
+- Export CV/LM en PDF
+- Notifications email pour nouvelles offres matching profil
 
 ---
 
 ## 📝 Commits
 
 ```
+0602797 - docs: Add comprehensive test guide for new modal features
+c177613 - feat: Add job details modal + integrate contact modal in landing page
+8e310a0 - docs: Sprint 10 complete summary
 d5ca56d - feat: Support URL mode parameter in profile creation from onboarding + Add SMTP to celery
 8504e55 - feat: Convert contact page to modal accessible from footer
 e91ed61 - docs: add CV parser integration guide + CI/CD optimization doc
@@ -182,9 +217,11 @@ e91ed61 - docs: add CV parser integration guide + CI/CD optimization doc
 
 - ⚡ **Gain temps création profil :** 10min → 30 sec (avec CV upload)
 - 🚀 **CI/CD 10x plus rapide** pour changements frontend
-- 💬 **Contact accessible partout** même déconnecté
-- 👀 **Détails offres** visibles avant sauvegarde
+- 💬 **Contact accessible partout** même déconnecté (landing + dashboard)
+- 👀 **Détails offres visibles AVANT sauvegarde** dans modal complet
+- 🤖 **Analyse possible AVANT sauvegarde** pour décider si intéressant
 - 🔙 **Navigation améliorée** sur pages auth
+- 📋 **Workflow optimisé :** Recherche → Détails → Analyse → Décision
 
 ---
 
