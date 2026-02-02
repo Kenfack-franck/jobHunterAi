@@ -58,7 +58,15 @@ export function ProfileForm({ profile, onSubmit, onCancel, isLoading = false, in
     }
 
     try {
-      await onSubmit(formData);
+      // Inclure les données du CV parsé (experiences, educations, skills)
+      const completeData = {
+        ...formData,
+        ...(initialData?.experiences && { experiences: initialData.experiences }),
+        ...(initialData?.educations && { educations: initialData.educations }),
+        ...(initialData?.skills && { skills: initialData.skills }),
+      };
+      
+      await onSubmit(completeData);
     } catch (error) {
       console.error('Error submitting profile:', error);
     }
@@ -69,7 +77,16 @@ export function ProfileForm({ profile, onSubmit, onCancel, isLoading = false, in
       <CardHeader>
         <CardTitle>{profile ? 'Modifier le profil' : 'Créer votre profil'}</CardTitle>
         <CardDescription>
-          Renseignez vos informations professionnelles de base
+          {initialData ? (
+            <span className="text-green-600 font-medium">
+              ✅ Données extraites de votre CV ! Vérifiez et complétez si nécessaire.
+              {initialData.experiences?.length > 0 && ` ${initialData.experiences.length} expérience(s)`}
+              {initialData.educations?.length > 0 && `, ${initialData.educations.length} formation(s)`}
+              {initialData.skills?.length > 0 && `, ${initialData.skills.length} compétence(s)`}
+            </span>
+          ) : (
+            'Renseignez vos informations professionnelles de base'
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
