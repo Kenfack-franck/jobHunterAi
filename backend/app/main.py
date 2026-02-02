@@ -48,15 +48,29 @@ app = FastAPI(
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handler pour afficher les détails des erreurs de validation"""
-    body = await request.body()
+    try:
+        body = await request.body()
+        body_str = body.decode('utf-8')[:1000] if body else "N/A"
+    except:
+        body_str = "Unable to decode body"
+    
     logger.error(f"❌ Validation error on {request.method} {request.url}")
-    logger.error(f"Body (first 1000 chars): {body.decode('utf-8')[:1000]}")
+    logger.error(f"Body (first 1000 chars): {body_str}")
     logger.error(f"Validation errors: {exc.errors()}")
+    
+    # Convert Pydantic errors to JSON-serializable format
+    errors = []
+    for error in exc.errors():
+        error_dict = dict(error)
+        # Convert any bytes to string
+        if 'input' in error_dict and isinstance(error_dict['input'], bytes):
+            error_dict['input'] = error_dict['input'].decode('utf-8', errors='ignore')
+        errors.append(error_dict)
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors()
+            "detail": errors
         }
     )
 

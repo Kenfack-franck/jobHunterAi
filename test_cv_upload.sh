@@ -1,111 +1,135 @@
 #!/bin/bash
-# Test complet du CV Parser avec le CV de Franck
-
 set -e
 
-echo "🧪 Test CV Parser avec CV_kenfack_franck.pdf"
-echo "=============================================="
+API_URL="http://localhost:8000/api/v1"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  TEST COMPLET: Upload CV → Parse → Create Profile"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 1. Créer un utilisateur
+EMAIL="test_cv_$(date +%s)@test.com"
+PASSWORD="Test123!"
+
 echo ""
-
-# Vérifier que le fichier existe
-CV_FILE="CV_kenfack_franck.pdf"
-if [ ! -f "$CV_FILE" ]; then
-    echo "❌ Fichier $CV_FILE non trouvé"
-    exit 1
-fi
-echo "✅ Fichier CV trouvé: $CV_FILE"
-
-# Vérifier que le backend est accessible
-echo ""
-echo "🔍 Vérification du backend..."
-curl -s http://localhost:8000/health > /dev/null
-if [ $? -eq 0 ]; then
-    echo "✅ Backend accessible"
-else
-    echo "❌ Backend non accessible"
-    exit 1
-fi
-
-# Créer/Login un utilisateur de test
-echo ""
-echo "🔐 Connexion utilisateur test..."
-
-# Essayer de se connecter avec un utilisateur existant
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+echo "1️⃣  Création utilisateur: $EMAIL"
+REGISTER=$(curl -s -X POST "$API_URL/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test.cvparser@example.com",
-    "password": "TestPassword123!"
+    "email": "'"$EMAIL"'",
+    "password": "'"$PASSWORD"'",
+    "full_name": "Test CV Upload"
   }')
 
-# Vérifier si la connexion a réussi
-TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+echo "   Réponse: $(echo $REGISTER | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"ID: {d.get('id', 'N/A')}, Email: {d.get('email', 'N/A')}\")" 2>/dev/null || echo "ERREUR")"
+
+# 2. Login
+echo ""
+echo "2️⃣  Login"
+TOKEN=$(curl -s -X POST "$API_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{"email":"$EMAIL","password":"$PASSWORD"}" | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])" 2>/dev/null)
 
 if [ -z "$TOKEN" ]; then
-    echo "👤 Utilisateur n'existe pas, création..."
-    
-    # Créer l'utilisateur
-    REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/register \
-      -H "Content-Type: application/json" \
-      -d '{
-        "email": "test.cvparser@example.com",
-        "password": "TestPassword123!",
-        "full_name": "Test CV Parser"
-      }')
-    
-    echo "✅ Utilisateur créé"
-    
-    # Se connecter maintenant
-    LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
-      -H "Content-Type: application/json" \
-      -d '{
-        "email": "test.cvparser@example.com",
-        "password": "TestPassword123!"
-      }')
-    
-    # Récupérer le token
-    TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
-    
-    if [ -z "$TOKEN" ]; then
-        echo "❌ Impossible de récupérer le token"
-        echo "Login Response: $LOGIN_RESPONSE"
-        exit 1
-    fi
+  echo "   ❌ Échec login"
+  exit 1
 fi
 
-echo "✅ Token obtenu: ${TOKEN:0:20}..."
+echo "   ✅ Token obtenu: ${TOKEN:0:30}..."
 
-# Tester l'upload du CV
+# 3. Parser le CV
 echo ""
-echo "📤 Upload du CV vers /api/v1/profile/parse-cv..."
-echo ""
-
-PARSE_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/profile/parse-cv \
+echo "3️⃣  Upload et parsing CV_kenfack_franck.pdf"
+PARSE_RESPONSE=$(curl -s -X POST "$API_URL/profile/parse-cv" \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@$CV_FILE" \
-  -w "\nHTTP_CODE:%{http_code}")
+  -F "file=@CV_kenfack_franck.pdf")
 
-HTTP_CODE=$(echo "$PARSE_RESPONSE" | grep "HTTP_CODE" | cut -d: -f2)
-RESPONSE_BODY=$(echo "$PARSE_RESPONSE" | sed '/HTTP_CODE/d')
-
-echo "📊 Code HTTP: $HTTP_CODE"
 echo ""
+echo "   📊 Résultat du parsing:"
+echo "$PARSE_RESPONSE" | python3 -m json.tool > /tmp/parsed_cv.json
 
-if [ "$HTTP_CODE" == "200" ]; then
-    echo "✅ SUCCESS! CV parsé avec succès"
-    echo ""
-    echo "📋 Données extraites:"
-    echo "$RESPONSE_BODY" | python3 -m json.tool 2>/dev/null || echo "$RESPONSE_BODY"
-else
-    echo "❌ ERREUR lors du parsing"
-    echo ""
-    echo "Réponse:"
-    echo "$RESPONSE_BODY"
-    echo ""
-    echo "Logs backend:"
-    docker compose logs backend --tail 30 | grep -E "parse-cv|Error|Traceback" || docker compose logs backend --tail 10
+# Compter les éléments
+EXP_COUNT=$(echo "$PARSE_RESPONSE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('experiences', [])))" 2>/dev/null || echo "0")
+EDU_COUNT=$(echo "$PARSE_RESPONSE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('educations', [])))" 2>/dev/null || echo "0")
+SKILL_COUNT=$(echo "$PARSE_RESPONSE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('skills', [])))" 2>/dev/null || echo "0")
+
+echo "   - Expériences: $EXP_COUNT"
+echo "   - Formations: $EDU_COUNT"
+echo "   - Compétences: $SKILL_COUNT"
+
+if [ "$SKILL_COUNT" = "0" ]; then
+  echo ""
+  echo "   ⚠️  AUCUNE COMPÉTENCE TROUVÉE !"
+  echo "   Réponse complète:"
+  cat /tmp/parsed_cv.json
+  exit 1
 fi
 
+# Vérifier un skill
 echo ""
-echo "=============================================="
-echo "Test terminé"
+echo "   🔍 Premier skill:"
+echo "$PARSE_RESPONSE" | python3 -c "import sys, json; s=json.load(sys.stdin).get('skills', [{}])[0]; print(f\"   Name: {s.get('name')}, Category: {s.get('category')}, Level: {s.get('level')}\")" 2>/dev/null
+
+# Vérifier les dates
+echo ""
+echo "   🔍 Première expérience:"
+echo "$PARSE_RESPONSE" | python3 -c "import sys, json; e=json.load(sys.stdin).get('experiences', [{}])[0]; print(f\"   Title: {e.get('title')}, Start: {e.get('start_date')}, End: {e.get('end_date')}\")" 2>/dev/null
+
+# 4. Tenter de créer le profil avec ces données
+echo ""
+echo "4️⃣  Création du profil avec les données parsées"
+
+CREATE_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "$API_URL/profile" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d "$PARSE_RESPONSE")
+
+HTTP_CODE=$(echo "$CREATE_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+BODY=$(echo "$CREATE_RESPONSE" | sed '/HTTP_CODE:/d')
+
+echo "   HTTP Status: $HTTP_CODE"
+
+if [ "$HTTP_CODE" = "201" ]; then
+  echo "   ✅ PROFIL CRÉÉ AVEC SUCCÈS !"
+  
+  # Vérifier
+  PROFILE=$(curl -s -X GET "$API_URL/profile" \
+    -H "Authorization: Bearer $TOKEN")
+  
+  P_EXP=$(echo "$PROFILE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('experiences', [])))" 2>/dev/null)
+  P_EDU=$(echo "$PROFILE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('educations', [])))" 2>/dev/null)
+  P_SKL=$(echo "$PROFILE" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('skills', [])))" 2>/dev/null)
+  
+  echo ""
+  echo "   📊 Profil sauvegardé:"
+  echo "   - Expériences: $P_EXP"
+  echo "   - Formations: $P_EDU"
+  echo "   - Compétences: $P_SKL"
+  
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  ✅ TEST RÉUSSI ! Workflow complet fonctionnel !"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+elif [ "$HTTP_CODE" = "422" ]; then
+  echo "   ❌ ERREUR 422 - Validation échouée"
+  echo ""
+  echo "   Détails de l'erreur:"
+  echo "$BODY" | python3 -m json.tool
+  
+  echo ""
+  echo "   📄 Payload envoyé (saved to /tmp/failed_payload.json):"
+  echo "$PARSE_RESPONSE" | python3 -m json.tool > /tmp/failed_payload.json
+  head -100 /tmp/failed_payload.json
+  
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  ❌ TEST ÉCHOUÉ - Voir erreurs ci-dessus"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  exit 1
+else
+  echo "   ❌ ERREUR HTTP $HTTP_CODE"
+  echo "$BODY"
+  exit 1
+fi
+
