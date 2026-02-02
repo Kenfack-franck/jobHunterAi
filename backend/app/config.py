@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     SCRAPING_TIMEOUT: int = 30  # secondes
     USER_AGENT: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     
+    # Email (SMTP) - Optionnel
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_FROM_NAME: str = "Job Hunter AI"
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True
