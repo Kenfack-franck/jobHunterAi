@@ -1,6 +1,6 @@
 "use client"
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import profileService from "@/lib/profile";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { CVUpload } from "@/components/profile/CVUpload";
@@ -10,9 +10,18 @@ import { FileUp, PenSquare, ArrowLeft } from "lucide-react";
 
 export default function CreateProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'choice' | 'upload' | 'manual'>('choice');
   const [initialData, setInitialData] = useState<any>(null);
+
+  // Support URL parameter from onboarding
+  useEffect(() => {
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'upload' || urlMode === 'form') {
+      setMode(urlMode === 'upload' ? 'upload' : 'manual');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (data: any) => {
     setIsLoading(true);
