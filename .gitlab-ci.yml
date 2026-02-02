@@ -7,7 +7,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 
-# Build Frontend
+# Build Frontend - Seulement si frontend/ a changé
 build_frontend:
   stage: build
   image: docker:latest
@@ -24,9 +24,13 @@ build_frontend:
         .
     - docker push $CI_REGISTRY_IMAGE/frontend:latest
   only:
-    - main
+    refs:
+      - main
+    changes:
+      - frontend/**/*
+      - .gitlab-ci.yml
 
-# Build Backend
+# Build Backend - Seulement si backend/ a changé
 build_backend:
   stage: build
   image: docker:latest
@@ -42,12 +46,17 @@ build_backend:
         .
     - docker push $CI_REGISTRY_IMAGE/backend:latest
   only:
-    - main
+    refs:
+      - main
+    changes:
+      - backend/**/*
+      - .gitlab-ci.yml
 
-# Déploiement
-deploy_production:
+# Déploiement Frontend - Seulement si frontend a été rebuilé
+deploy_frontend:
   stage: deploy
   image: alpine:latest
+  needs: ["build_frontend"]
   before_script:
     - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
@@ -56,8 +65,38 @@ deploy_production:
     - chmod 700 ~/.ssh
     - ssh-keyscan $SSH_IP >> ~/.ssh/known_hosts
   script:
-    - echo "🚀 Déploiement Job Hunter AI..."
-    # Créer fichier .env sur le serveur
+    - echo "🎨 Déploiement Frontend..."
+    - ssh $SSH_USER@$SSH_IP "
+        cd ~/jobhunter &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        docker compose -f docker-compose.prod.yml pull frontend &&
+        docker compose -f docker-compose.prod.yml up -d frontend
+      "
+    - echo "✅ Frontend déployé"
+  only:
+    refs:
+      - main
+    changes:
+      - frontend/**/*
+  environment:
+    name: production
+    url: https://jobhunter.franckkenfack.works
+
+# Déploiement Backend - Seulement si backend a été rebuilé
+deploy_backend:
+  stage: deploy
+  image: alpine:latest
+  needs: ["build_backend"]
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SSH_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "⚙️ Déploiement Backend..."
+    # Créer/mettre à jour le fichier .env
     - |
       ssh $SSH_USER@$SSH_IP "cat > ~/jobhunter/.env << 'EOFENV'
       POSTGRES_DB=jobhunter_db
@@ -77,7 +116,59 @@ deploy_production:
       SMTP_FROM_EMAIL=$SMTP_FROM_EMAIL
       SMTP_FROM_NAME=$SMTP_FROM_NAME
       EOFENV"
-    # Pull et démarrage
+    # Déployer backend + celery (utilisent la même image)
+    - ssh $SSH_USER@$SSH_IP "
+        cd ~/jobhunter &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        docker compose -f docker-compose.prod.yml pull backend &&
+        docker compose -f docker-compose.prod.yml up -d backend celery
+      "
+    - echo "✅ Backend + Celery déployés"
+  only:
+    refs:
+      - main
+    changes:
+      - backend/**/*
+  environment:
+    name: production
+    url: https://api.jobhunter.franckkenfack.works
+
+# Déploiement complet - Seulement si docker-compose ou .env changent
+deploy_full:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SSH_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "🚀 Déploiement complet (infrastructure changée)..."
+    # Mettre à jour docker-compose.prod.yml sur le serveur
+    - scp docker-compose.prod.yml $SSH_USER@$SSH_IP:~/jobhunter/
+    # Créer/mettre à jour le fichier .env
+    - |
+      ssh $SSH_USER@$SSH_IP "cat > ~/jobhunter/.env << 'EOFENV'
+      POSTGRES_DB=jobhunter_db
+      POSTGRES_USER=jobhunter
+      POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      SECRET_KEY=$SECRET_KEY
+      OPENAI_API_KEY=$OPENAI_API_KEY
+      GEMINI_API_KEY=$GEMINI_API_KEY
+      RAPIDAPI_KEY=$RAPIDAPI_KEY
+      CORS_ORIGINS=https://jobhunter.franckkenfack.works
+      CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
+      IMAGE_TAG=latest
+      SMTP_HOST=$SMTP_HOST
+      SMTP_PORT=$SMTP_PORT
+      SMTP_USER=$SMTP_USER
+      SMTP_PASSWORD=$SMTP_PASSWORD
+      SMTP_FROM_EMAIL=$SMTP_FROM_EMAIL
+      SMTP_FROM_NAME=$SMTP_FROM_NAME
+      EOFENV"
+    # Redémarrer tous les services
     - ssh $SSH_USER@$SSH_IP "
         cd ~/jobhunter &&
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
@@ -85,8 +176,14 @@ deploy_production:
         docker compose -f docker-compose.prod.yml up -d --remove-orphans
       "
     - ssh $SSH_USER@$SSH_IP "docker image prune -f"
+    - echo "✅ Déploiement complet terminé"
   only:
-    - main
+    refs:
+      - main
+    changes:
+      - docker-compose.prod.yml
+      - .gitlab-ci.yml
   environment:
     name: production
     url: https://jobhunter.franckkenfack.works
+
