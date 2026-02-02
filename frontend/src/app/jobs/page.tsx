@@ -6,6 +6,7 @@ import jobOfferService from "@/lib/jobOffer";
 import { SearchBar } from "@/components/jobs/SearchBar";
 import { JobOfferCard } from "@/components/jobs/JobOfferCard";
 import { AnalysisModal } from "@/components/jobs/AnalysisModal";
+import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/auth";
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
@@ -22,6 +23,10 @@ export default function JobsPage() {
   // Modal d'analyse
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  
+  // Modal de détails
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<JobOffer | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -146,6 +151,11 @@ export default function JobsPage() {
     setShowAnalysisModal(true);
   };
 
+  const handleViewDetails = (job: JobOffer) => {
+    setSelectedJobForDetails(job);
+    setShowDetailsModal(true);
+  };
+
   if (loading && jobs.length === 0 && searchStatus === "idle") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -210,6 +220,7 @@ export default function JobsPage() {
               <JobOfferCard
                 key={job.id}
                 job={job}
+                onClick={() => handleViewDetails(job)}
                 onSave={() => handleSave(job)}
                 onDelete={() => handleDelete(job.id)}
                 onAnalyze={() => handleAnalyze(job)}
@@ -229,6 +240,16 @@ export default function JobsPage() {
           companyName={selectedJob.company_name}
         />
       )}
+
+      {/* Modal de détails */}
+      <JobDetailsModal
+        job={selectedJobForDetails}
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        onSave={selectedJobForDetails && !selectedJobForDetails.user_id ? () => handleSave(selectedJobForDetails) : undefined}
+        onAnalyze={selectedJobForDetails ? () => handleAnalyze(selectedJobForDetails) : undefined}
+        isSaved={selectedJobForDetails?.user_id !== undefined}
+      />
     </div>
   );
 }

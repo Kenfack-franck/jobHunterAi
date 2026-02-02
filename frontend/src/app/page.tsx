@@ -1,14 +1,16 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Zap, Shield, TrendingUp, FileText, Search, Building2, Mail } from 'lucide-react';
+import { ContactModal } from '@/components/contact/ContactModal';
 
 export default function Home() {
   const router = useRouter();
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Rediriger vers dashboard si déjà connecté
   useEffect(() => {
@@ -188,7 +190,14 @@ export default function Home() {
               <ul className="space-y-2 text-sm">
                 <li><Link href="#" className="hover:text-white">Documentation</Link></li>
                 <li><Link href="#" className="hover:text-white">FAQ</Link></li>
-                <li><Link href="#" className="hover:text-white">Contact</Link></li>
+                <li>
+                  <button 
+                    onClick={() => setShowContactModal(true)}
+                    className="hover:text-white transition-colors"
+                  >
+                    Contact
+                  </button>
+                </li>
               </ul>
             </div>
             <div>
@@ -205,6 +214,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Modal de contact */}
+      <ContactModal open={showContactModal} onOpenChange={setShowContactModal} />
     </div>
   );
 }
