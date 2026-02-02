@@ -3,18 +3,21 @@ Routes API pour la gestion des profils candidats.
 """
 from uuid import UUID
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.services.profile_service import ProfileService
+from app.services.cv_parser_service import CVParserService
+from app.services.ai_service import AIService
 from app.schemas.profile import (
     ProfileCreate, ProfileUpdate, ProfileResponse,
     ExperienceCreate, ExperienceUpdate, ExperienceResponse,
     EducationCreate, EducationUpdate, EducationResponse,
-    SkillCreate, SkillUpdate, SkillResponse
+    SkillCreate, SkillUpdate, SkillResponse,
+    CVParseResponse
 )
 
 
@@ -289,3 +292,83 @@ async def delete_skill(
     """
     await ProfileService.delete_skill(skill_id, current_user.id, db)
     return None
+
+
+# ==================== CV PARSING ROUTE ====================
+
+@router.post("/parse-cv", response_model=CVParseResponse, status_code=status.HTTP_200_OK)
+async def parse_cv(
+    file: UploadFile = File(..., description="CV au format PDF"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Parse un CV PDF et extrait automatiquement les informations du profil.
+    
+    Cette route utilise l'IA pour analyser le CV et extraire :
+    - Informations personnelles (nom, titre, résumé, contacts)
+    - Expériences professionnelles
+    - Formations académiques
+    - Compétences techniques et soft skills
+    
+    Le résultat est retourné au format JSON structuré, prêt à être utilisé
+    pour pré-remplir le formulaire de profil.
+    
+    Args:
+        file: Fichier PDF du CV (max 10MB)
+        
+    Returns:
+        CVParseResponse avec les données extraites
+        
+    Raises:
+        400: Si le fichier n'est pas un PDF ou est invalide
+        413: Si le fichier dépasse 10MB
+        500: Si l'analyse échoue
+    """
+    # Valider le type de fichier
+    if not file.content_type == "application/pdf":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seuls les fichiers PDF sont acceptés"
+        )
+    
+    # Valider la taille (10MB max)
+    file_size = 0
+    chunk_size = 1024 * 1024  # 1MB chunks
+    while chunk := await file.read(chunk_size):
+        file_size += len(chunk)
+        if file_size > 10 * 1024 * 1024:  # 10MB
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Le fichier ne doit pas dépasser 10MB"
+            )
+    
+    # Remettre le curseur au début
+    await file.seek(0)
+    
+    try:
+        # Initialiser les services
+        ai_service = AIService()
+        cv_parser = CVParserService(ai_service)
+        
+        # Parser le CV
+        profile_data = await cv_parser.parse_cv_pdf(file)
+        
+        return CVParseResponse(
+            success=True,
+            message="CV analysé avec succès ! Vérifiez les informations avant de sauvegarder.",
+            profile_data=profile_data
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        import logging
+        logging.error(f"Erreur parsing CV: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de l'analyse du CV: {str(e)}"
+        )

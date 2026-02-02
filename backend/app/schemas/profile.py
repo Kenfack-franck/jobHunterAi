@@ -218,3 +218,30 @@ class ProfileSummary(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ==================== CV PARSING SCHEMAS ====================
+
+class CVParseResponse(BaseModel):
+    """Schéma pour la réponse du parsing de CV"""
+    success: bool = True
+    message: str = "CV analysé avec succès"
+    profile_data: dict  # Contiendra les données extraites du CV
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "message": "CV analysé avec succès ! Vérifiez les informations avant de sauvegarder.",
+                "profile_data": {
+                    "full_name": "Jean Dupont",
+                    "title": "Développeur Full-Stack",
+                    "summary": "Développeur passionné avec 5 ans d'expérience...",
+                    "phone": "+33 6 12 34 56 78",
+                    "location": "Paris, France",
+                    "experiences": [],
+                    "educations": [],
+                    "skills": []
+                }
+            }
+        }
