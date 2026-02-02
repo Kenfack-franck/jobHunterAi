@@ -117,8 +117,8 @@ FORMAT DE SORTIE (JSON strict):
   "skills": [
     {{
       "name": "Nom de la compétence",
-      "category": "Technique|Soft Skills|Langues|Outils",
-      "level": "Débutant|Intermédiaire|Avancé|Expert"
+      "category": "language|framework|tool|soft_skill|other",
+      "level": "beginner|intermediate|advanced|expert"
     }}
   ]
 }}
@@ -131,7 +131,11 @@ RÈGLES IMPORTANTES:
 5. Extrait TOUTES les compétences mentionnées (techniques, soft skills, langues, outils)
 6. Pour les technologies dans experiences, liste tous les outils/langages mentionnés
 7. Le résumé doit être informatif et professionnel (pas juste une liste)
-8. Retourne UNIQUEMENT le JSON, rien d'autre
+8. Pour les skills:
+   - category doit être: "language" (langages de prog), "framework" (React, Angular, etc), "tool" (Docker, Git, etc), "soft_skill" (communication, leadership, etc), "other" (autres)
+   - level doit être: "beginner" (débutant), "intermediate" (intermédiaire), "advanced" (avancé), "expert" (expert)
+9. Si une date start_date ou end_date est manquante, mets "2020-01-01" comme date par défaut (PAS null pour start_date)
+10. Retourne UNIQUEMENT le JSON, rien d'autre
 
 CV À ANALYSER:
 {cv_text}

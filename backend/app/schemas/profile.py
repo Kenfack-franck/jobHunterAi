@@ -34,6 +34,39 @@ class SkillBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     category: SkillCategory = SkillCategory.OTHER
     level: SkillLevel = SkillLevel.INTERMEDIATE
+    
+    @field_validator('category', mode='before')
+    @classmethod
+    def normalize_category(cls, v):
+        """Normalise la catégorie (accepte français ET anglais)"""
+        if isinstance(v, str):
+            mapping = {
+                'technique': 'other',
+                'soft skills': 'soft_skill',
+                'langues': 'language',
+                'outils': 'tool',
+                'languages': 'language',
+                'frameworks': 'framework',
+                'tools': 'tool',
+            }
+            return mapping.get(v.lower(), v.lower())
+        return v
+    
+    @field_validator('level', mode='before')
+    @classmethod
+    def normalize_level(cls, v):
+        """Normalise le niveau (accepte français ET anglais)"""
+        if v is None:
+            return 'intermediate'  # Valeur par défaut
+        if isinstance(v, str):
+            mapping = {
+                'débutant': 'beginner',
+                'intermédiaire': 'intermediate',
+                'avancé': 'advanced',
+                'expert': 'expert',
+            }
+            return mapping.get(v.lower(), v.lower())
+        return v
 
 
 class SkillCreate(SkillBase):
