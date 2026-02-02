@@ -175,8 +175,10 @@ class ProfileBase(BaseModel):
 
 
 class ProfileCreate(ProfileBase):
-    """Schéma pour créer un profil"""
-    pass
+    """Schéma pour créer un profil avec relations optionnelles"""
+    experiences: Optional[List[ExperienceCreate]] = Field(default_factory=list)
+    educations: Optional[List[EducationCreate]] = Field(default_factory=list)
+    skills: Optional[List[SkillCreate]] = Field(default_factory=list)
 
 
 class ProfileUpdate(BaseModel):

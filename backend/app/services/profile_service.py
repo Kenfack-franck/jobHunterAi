@@ -47,19 +47,21 @@ class ProfileService:
     @staticmethod
     async def create_profile(user_id: UUID, data: ProfileCreate, db: AsyncSession) -> Profile:
         """
-        Crée un nouveau profil pour un utilisateur.
+        Crée un nouveau profil pour un utilisateur avec relations optionnelles.
         
         Args:
             user_id: ID de l'utilisateur
-            data: Données du profil
+            data: Données du profil (peut inclure experiences, educations, skills)
             db: Session de base de données
             
         Returns:
-            Profile créé
+            Profile créé avec toutes les relations
             
         Raises:
             HTTPException: Si un profil existe déjà
         """
+        from app.models.profile import Experience, Education, Skill
+        
         # Vérifier qu'un profil n'existe pas déjà
         existing = await ProfileService.get_user_profile(user_id, db)
         if existing:
@@ -68,14 +70,48 @@ class ProfileService:
                 detail="Profile already exists for this user"
             )
         
-        # Créer le profil
+        # Extraire les relations
+        experiences_data = data.experiences or []
+        educations_data = data.educations or []
+        skills_data = data.skills or []
+        
+        # Créer le profil (sans les relations)
+        profile_dict = data.model_dump(exclude={'experiences', 'educations', 'skills'})
         profile = Profile(
             user_id=user_id,
-            **data.model_dump()
+            **profile_dict
         )
         db.add(profile)
         await db.commit()
         await db.refresh(profile)
+        
+        # Créer les expériences
+        for idx, exp_data in enumerate(experiences_data):
+            exp = Experience(
+                profile_id=profile.id,
+                order_index=idx,
+                **exp_data.model_dump()
+            )
+            db.add(exp)
+        
+        # Créer les formations
+        for idx, edu_data in enumerate(educations_data):
+            edu = Education(
+                profile_id=profile.id,
+                order_index=idx,
+                **edu_data.model_dump()
+            )
+            db.add(edu)
+        
+        # Créer les compétences
+        for skill_data in skills_data:
+            skill = Skill(
+                profile_id=profile.id,
+                **skill_data.model_dump()
+            )
+            db.add(skill)
+        
+        await db.commit()
         
         # Recharger avec les relations
         return await ProfileService.get_user_profile(user_id, db)
