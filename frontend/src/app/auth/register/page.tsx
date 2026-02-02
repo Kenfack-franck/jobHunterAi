@@ -82,15 +82,26 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold text-center">
-            Créer un compte
-          </CardTitle>
-          <CardDescription className="text-center">
-            Rejoignez Job Hunter AI et automatisez votre recherche d'emploi
-          </CardDescription>
-        </CardHeader>
+      <div className="w-full max-w-md">
+        {/* Bouton retour */}
+        <div className="mb-4">
+          <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour à l'accueil
+          </Link>
+        </div>
+        
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-3xl font-bold text-center">
+              Créer un compte
+            </CardTitle>
+            <CardDescription className="text-center">
+              Rejoignez Job Hunter AI et automatisez votre recherche d'emploi
+            </CardDescription>
+          </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
@@ -175,6 +186,7 @@ export default function RegisterPage() {
           </CardFooter>
         </form>
       </Card>
+      </div>
     </div>
   );
 }
