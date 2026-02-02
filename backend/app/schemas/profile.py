@@ -2,9 +2,9 @@
 Schémas Pydantic pour la gestion des profils candidats.
 """
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
 
 
@@ -65,9 +65,29 @@ class EducationBase(BaseModel):
     institution: str = Field(..., min_length=1, max_length=200)
     field_of_study: Optional[str] = Field(None, max_length=255)
     location: Optional[str] = Field(None, max_length=200)
-    start_date: date
-    end_date: Optional[date] = None
+    start_date: Union[date, str]
+    end_date: Optional[Union[date, str]] = None
     description: Optional[str] = None
+    
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        """Convertit string en date si nécessaire"""
+        if v is None or isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            # Essayer de parser la date (format ISO: YYYY-MM-DD)
+            try:
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except ValueError:
+                # Essayer d'autres formats courants
+                for fmt in ['%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d']:
+                    try:
+                        return datetime.strptime(v, fmt).date()
+                    except ValueError:
+                        continue
+                raise ValueError(f"Invalid date format: {v}. Expected YYYY-MM-DD")
+        return v
     
     @field_validator('end_date')
     @classmethod
@@ -111,11 +131,29 @@ class ExperienceBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     company: str = Field(..., min_length=1, max_length=200)
     location: Optional[str] = Field(None, max_length=200)
-    start_date: date
-    end_date: Optional[date] = None
+    start_date: Union[date, str]
+    end_date: Optional[Union[date, str]] = None
     current: bool = False
     description: Optional[str] = None
     technologies: Optional[List[str]] = Field(default_factory=list)
+    
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        """Convertit string en date si nécessaire"""
+        if v is None or isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except ValueError:
+                for fmt in ['%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d']:
+                    try:
+                        return datetime.strptime(v, fmt).date()
+                    except ValueError:
+                        continue
+                raise ValueError(f"Invalid date format: {v}. Expected YYYY-MM-DD")
+        return v
     
     @field_validator('end_date')
     @classmethod

@@ -1,12 +1,17 @@
 """
 Application principale FastAPI - Job Hunter AI
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+import logging
 
 from app.config import settings
 from app.database import init_db, close_db
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -37,6 +42,24 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+
+# Handler pour les erreurs de validation
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handler pour afficher les détails des erreurs de validation"""
+    body = await request.body()
+    logger.error(f"❌ Validation error on {request.method} {request.url}")
+    logger.error(f"Body (first 1000 chars): {body.decode('utf-8')[:1000]}")
+    logger.error(f"Validation errors: {exc.errors()}")
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "detail": exc.errors()
+        }
+    )
+
 
 # Configuration CORS
 app.add_middleware(

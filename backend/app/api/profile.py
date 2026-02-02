@@ -67,6 +67,12 @@ async def create_profile(
     Raises:
         400: Si un profil existe déjà
     """
+    # Debug: log received data
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Creating profile for user {current_user.id}")
+    logger.info(f"Received data: title={data.title}, exp={len(data.experiences or [])}, edu={len(data.educations or [])}, skills={len(data.skills or [])}")
+    
     profile = await ProfileService.create_profile(current_user.id, data, db)
     return profile
 
