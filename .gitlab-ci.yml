@@ -70,6 +70,12 @@ deploy_production:
       CORS_ORIGINS=https://jobhunter.franckkenfack.works
       CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE
       IMAGE_TAG=latest
+      SMTP_HOST=$SMTP_HOST
+      SMTP_PORT=$SMTP_PORT
+      SMTP_USER=$SMTP_USER
+      SMTP_PASSWORD=$SMTP_PASSWORD
+      SMTP_FROM_EMAIL=$SMTP_FROM_EMAIL
+      SMTP_FROM_NAME=$SMTP_FROM_NAME
       EOFENV"
     # Pull et démarrage
     - ssh $SSH_USER@$SSH_IP "
