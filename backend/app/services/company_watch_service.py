@@ -679,3 +679,28 @@ class CompanyWatchService:
         await self.db.commit()
         
         return saved_count
+    
+    def _slugify_company_name(self, company_name: str) -> str:
+        """
+        Crée un slug unique à partir du nom de l'entreprise
+        
+        Args:
+            company_name: Nom de l'entreprise
+        
+        Returns:
+            Slug normalisé (ex: "Google" -> "google", "LVMH Group" -> "lvmh-group")
+        """
+        import re
+        # Convertir en minuscules
+        slug = company_name.lower()
+        # Supprimer les accents
+        slug = slug.replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+        slug = slug.replace('à', 'a').replace('â', 'a')
+        slug = slug.replace('ù', 'u').replace('û', 'u')
+        slug = slug.replace('ô', 'o').replace('ö', 'o')
+        slug = slug.replace('ç', 'c')
+        # Remplacer espaces et caractères spéciaux par tirets
+        slug = re.sub(r'[^a-z0-9]+', '-', slug)
+        # Supprimer tirets début/fin
+        slug = slug.strip('-')
+        return slug
