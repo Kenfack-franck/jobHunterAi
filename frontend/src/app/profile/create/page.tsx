@@ -37,7 +37,9 @@ export default function CreateProfilePage() {
   };
 
   const handleCVParsed = (data: any) => {
-    setParsedData(data);
+    // Le backend retourne { success, message, profile_data }
+    // On extrait profile_data si présent, sinon on utilise data tel quel
+    setParsedData(data.profile_data || data);
     setMode('review'); // Passer à la page de revue
   };
 
