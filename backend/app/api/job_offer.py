@@ -111,14 +111,16 @@ async def search_job_offers(
             try:
                 # Générer un UUID temporaire pour les offres scrapées (non sauvegardées en DB)
                 offer_id = offer.get("id")
-                if not offer_id or offer_id == "":
+                is_from_db = offer_id and offer_id != ""  # Si ID existe, c'est de la DB
+                
+                if not is_from_db:
                     import uuid
                     offer_id = str(uuid.uuid4())
                 
                 # Normaliser les champs
                 normalized = JobOfferResponse(
                     id=offer_id,
-                    user_id=current_user.id,  # Associé à l'utilisateur actuel
+                    user_id=current_user.id if is_from_db else None,  # user_id seulement si c'est une offre sauvegardée
                     job_title=offer.get("title", "Poste non spécifié"),
                     company_name=offer.get("company"),
                     location=offer.get("location"),

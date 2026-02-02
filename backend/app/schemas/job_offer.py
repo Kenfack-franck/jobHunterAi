@@ -41,7 +41,7 @@ class JobOfferUpdate(BaseModel):
 class JobOfferResponse(JobOfferBase):
     """Réponse avec une offre d'emploi"""
     id: UUID
-    user_id: UUID
+    user_id: Optional[UUID] = None  # Optionnel pour offres scrapées non sauvegardées
     analyzed_at: Optional[datetime] = None
     created_at: datetime
 
