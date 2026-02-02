@@ -232,15 +232,16 @@ export default function ContactPage() {
             Automatisez votre recherche d'emploi avec l'intelligence artificielle
           </p>
           <div className="flex justify-center gap-4">
-            <Button variant="outline" asChild>
-              <a href="https://franckkenfack.works" target="_blank" rel="noopener noreferrer">
-                Voir mon portfolio
-              </a>
+            <Button 
+              variant="outline"
+              onClick={() => window.open('https://franckkenfack.works', '_blank')}
+            >
+              Voir mon portfolio
             </Button>
-            <Button asChild>
-              <a href="https://www.linkedin.com/in/franck-ulrich-kenfack-947231252" target="_blank" rel="noopener noreferrer">
-                Me suivre sur LinkedIn
-              </a>
+            <Button
+              onClick={() => window.open('https://www.linkedin.com/in/franck-ulrich-kenfack-947231252', '_blank')}
+            >
+              Me suivre sur LinkedIn
             </Button>
           </div>
         </div>
