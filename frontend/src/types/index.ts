@@ -247,6 +247,7 @@ export interface JobOfferSearchParams {
   keyword?: string;
   location?: string;
   job_type?: string;
+  work_mode?: string;
   company_name?: string;
   limit?: number;
   offset?: number;

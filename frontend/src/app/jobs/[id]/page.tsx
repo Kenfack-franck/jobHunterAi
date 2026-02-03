@@ -126,7 +126,7 @@ export default function JobDetailPage() {
             )}
 
             <div className="border-t pt-4 text-sm text-gray-500">
-              <p>Ajoutée le {formatDate(job.created_at)}</p>
+              {job.created_at && <p>Ajoutée le {formatDate(job.created_at)}</p>}
               {job.analyzed_at && (
                 <p>Analysée le {formatDate(job.analyzed_at)}</p>
               )}

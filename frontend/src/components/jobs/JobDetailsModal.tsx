@@ -8,8 +8,6 @@ import { JobOffer } from '@/types';
 import { 
   MapPin, 
   Briefcase, 
-  Clock, 
-  DollarSign, 
   Building2, 
   ExternalLink,
   Calendar,
@@ -106,20 +104,6 @@ export function JobDetailsModal({
                 </Badge>
               </div>
             )}
-            
-            {job.salary && (
-              <div className="flex items-center gap-2 text-sm">
-                <DollarSign className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">{job.salary}</span>
-              </div>
-            )}
-
-            {job.experience_level && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">{job.experience_level}</span>
-              </div>
-            )}
           </div>
 
           {/* Dates et source */}
@@ -171,13 +155,13 @@ export function JobDetailsModal({
           )}
 
           {/* Technologies / Compétences requises */}
-          {job.required_skills && job.required_skills.length > 0 && (
+          {job.extracted_keywords && job.extracted_keywords.length > 0 && (
             <div>
-              <h3 className="font-semibold text-lg mb-3">Compétences requises</h3>
+              <h3 className="font-semibold text-lg mb-3">Mots-clés extraits</h3>
               <div className="flex flex-wrap gap-2">
-                {job.required_skills.map((skill, idx) => (
+                {job.extracted_keywords.map((keyword, idx) => (
                   <Badge key={idx} variant="secondary">
-                    {skill}
+                    {keyword}
                   </Badge>
                 ))}
               </div>
@@ -186,11 +170,11 @@ export function JobDetailsModal({
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 pt-4 border-t">
-            {(job.apply_url || job.source_url) && (
+            {job.source_url && (
               <Button 
                 variant="default" 
                 className="flex-1"
-                onClick={() => window.open(job.apply_url || job.source_url, '_blank')}
+                onClick={() => window.open(job.source_url, '_blank')}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Postuler sur {job.source_platform || 'le site'}
@@ -224,22 +208,6 @@ export function JobDetailsModal({
               </Button>
             )}
           </div>
-
-          {/* Company website */}
-          {job.company_website && (
-            <div className="text-sm text-gray-600">
-              <a 
-                href={job.company_website} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-primary"
-              >
-                <Globe className="w-4 h-4" />
-                Site web de l'entreprise
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
