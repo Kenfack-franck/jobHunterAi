@@ -30,11 +30,11 @@ class SearchRequest(BaseModel):
 class OfferResponse(BaseModel):
     """Offre d'emploi dans la réponse"""
     id: Optional[str] = None
-    title: str
-    company: str
+    job_title: str
+    company_name: str
     location: str
     description: str
-    url: str
+    source_url: str
     source_platform: str
     job_type: Optional[str] = None
     work_mode: Optional[str] = None
@@ -50,7 +50,9 @@ class SearchResponse(BaseModel):
     scraped_count: Optional[int] = None
     deduplicated_count: Optional[int] = None
     saved_count: Optional[int] = None
-    platforms_scraped: Optional[List[str]] = None
+    platforms_scraped: Optional[List[str]] = None  # Deprecated, use sources_used
+    sources_used: Optional[List[str]] = None  # New multi-source field
+    cached: Optional[bool] = False  # Cache hit indicator
     search_params: Optional[dict] = None
     scraped_at: Optional[str] = None
     duration_seconds: Optional[float] = None

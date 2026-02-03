@@ -8,17 +8,21 @@ import { JobOfferCard } from "@/components/jobs/JobOfferCard";
 import { AnalysisModal } from "@/components/jobs/AnalysisModal";
 import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
 import { Button } from "@/components/ui/button";
-import { authService } from "@/lib/auth";
-import { Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, CheckCircle2, XCircle, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function JobsPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useState<JobOfferSearchParams>({});
   const [searchStatus, setSearchStatus] = useState<"idle" | "searching" | "success" | "error">("idle");
   const [searchMessage, setSearchMessage] = useState("");
   const [scrapingProgress, setScrapingProgress] = useState<string>("");
+  
+  // Filtre d'affichage
+  const [filter, setFilter] = useState<"all" | "saved" | "unsaved">("all");
   
   // Modal d'analyse
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
@@ -29,12 +33,35 @@ export default function JobsPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
+    // Attendre que l'auth soit chargé
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
       router.push("/auth/login");
       return;
     }
-    loadJobs();
-  }, [router]);
+    
+    // Charger les offres sauvegardées
+    loadSavedJobs();
+  }, [authLoading, isAuthenticated, router]);
+
+  // Charger les offres sauvegardées depuis la DB
+  const loadSavedJobs = async () => {
+    setLoading(true);
+    try {
+      const savedJobs = await jobOfferService.getJobOffers(100, 0);
+      setJobs(savedJobs);
+      console.log(`✅ ${savedJobs.length} offre(s) sauvegardée(s) chargée(s)`);
+    } catch (error: any) {
+      console.error("Erreur chargement offres sauvegardées:", error);
+      // Si erreur 401, l'utilisateur sera redirigé vers login
+      if (error.response?.status === 401) {
+        router.push("/auth/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadJobs = async (params: JobOfferSearchParams = {}) => {
     setLoading(true);
@@ -47,7 +74,7 @@ export default function JobsPage() {
       const progressInterval = setInterval(() => {
         const messages = [
           "🌐 Connexion aux plateformes de recrutement...",
-          "🤖 Scraping RemoteOK en cours...",
+          "🤖 Scraping des sources prioritaires...",
           "📊 Extraction et analyse des offres...",
           "🔄 Traitement et déduplication...",
           "💾 Sauvegarde des nouvelles offres...",
@@ -55,31 +82,33 @@ export default function JobsPage() {
         setScrapingProgress(messages[Math.floor(Math.random() * messages.length)]);
       }, 3000);
       
-      const data = await jobOfferService.searchJobOffers(params);
+      const data = await jobOfferService.searchJobOffersWithScraping(params);
       
       clearInterval(progressInterval);
       
-      // Feedback avec statistiques
-      const dbOffers = data.filter(j => !j.source_platform || j.source_platform === "manual");
-      const scrapedOffers = data.filter(j => j.source_platform && j.source_platform !== "manual");
-      
-      if (scrapedOffers.length > 0) {
-        setSearchMessage(`✅ ${data.length} offre(s) trouvée(s) : ${dbOffers.length} en base + ${scrapedOffers.length} scrapées !`);
+      // Feedback avec cache et sources
+      if (data.cached) {
+        setSearchMessage(`⚡ ${data.count} offre(s) depuis le cache (instantané !)`);
+        setScrapingProgress(`📦 Sources: ${data.sources_used?.join(', ') || 'Toutes'}`);
       } else {
-        setSearchMessage(`✅ ${data.length} offre(s) trouvée(s) dans votre base de données.`);
+        setSearchMessage(`✅ ${data.count} offre(s) trouvée(s) !`);
+        setScrapingProgress(`📦 Sources scrapées: ${data.sources_used?.join(', ') || 'Aucune'}`);
       }
-      
-      setScrapingProgress("");
       
       // Petite pause pour que l'utilisateur voie le message
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      setJobs(data);
+      setJobs(data.offers);
       setSearchParams(params);
       
-      if (data.length === 0) {
+      if (data.count === 0) {
         setSearchStatus("idle");
-        setSearchMessage("😞 Aucune offre trouvée. Essayez d'autres mots-clés ou une localisation différente.");
+        // Afficher le message du backend s'il existe, sinon message par défaut
+        if (data.message) {
+          setSearchMessage(`⚠️ ${data.message}`);
+        } else {
+          setSearchMessage("😞 Aucune offre trouvée. Essayez d'autres mots-clés ou une localisation différente.");
+        }
         setScrapingProgress("");
       } else {
         setSearchStatus("success");
@@ -99,10 +128,23 @@ export default function JobsPage() {
         setSearchMessage("❌ Session expirée. Veuillez vous reconnecter.");
       } else if (error.response?.status === 404) {
         setSearchMessage("❌ Endpoint introuvable. Vérifiez que le backend est démarré.");
+      } else if (error.response?.status === 422) {
+        // Erreur de validation - extraire le message
+        const detail = error.response?.data?.detail;
+        if (Array.isArray(detail)) {
+          const firstError = detail[0];
+          setSearchMessage(`❌ Erreur de validation : ${firstError.msg || 'Données invalides'}`);
+        } else if (typeof detail === 'string') {
+          setSearchMessage(`❌ ${detail}`);
+        } else {
+          setSearchMessage("❌ Erreur de validation. Vérifiez les paramètres de recherche.");
+        }
       } else if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
         setSearchMessage("⏱️ Le scraping a pris trop de temps. Veuillez réessayer ou affiner votre recherche.");
       } else {
-        setSearchMessage(error.response?.data?.detail || "❌ Erreur lors de la recherche. Veuillez réessayer.");
+        const detail = error.response?.data?.detail;
+        const errorMsg = typeof detail === 'string' ? detail : "❌ Erreur lors de la recherche. Veuillez réessayer.";
+        setSearchMessage(errorMsg);
       }
     } finally {
       setLoading(false);
@@ -116,7 +158,7 @@ export default function JobsPage() {
   const handleSave = async (job: JobOffer) => {
     try {
       // Sauvegarder l'offre en base de données
-      await jobOfferService.createJobOffer({
+      const savedJob = await jobOfferService.createJobOffer({
         job_title: job.job_title,
         company_name: job.company_name,
         location: job.location,
@@ -126,8 +168,14 @@ export default function JobsPage() {
         source_platform: job.source_platform
       });
       
-      // Recharger les offres pour inclure la nouvelle
-      await loadJobs(searchParams);
+      // Mettre à jour l'offre dans le state local en utilisant source_url comme clé unique
+      // (car l'ID temporaire change après sauvegarde)
+      setJobs(prevJobs => prevJobs.map(j => 
+        j.source_url === job.source_url && j.job_title === job.job_title
+          ? { ...savedJob } // Remplacer par l'offre complète sauvegardée
+          : j
+      ));
+      
       alert("✅ Offre sauvegardée avec succès !");
     } catch (error) {
       console.error("Erreur de sauvegarde:", error);
@@ -139,15 +187,48 @@ export default function JobsPage() {
     if (confirm("Supprimer cette offre ?")) {
       try {
         await jobOfferService.deleteJobOffer(jobId);
-        await loadJobs(searchParams);
+        // Retirer l'offre du state local au lieu de recharger
+        setJobs(prevJobs => prevJobs.filter(j => j.id !== jobId));
+        alert("✅ Offre supprimée");
       } catch (error) {
         console.error("Erreur de suppression:", error);
+        alert("❌ Erreur lors de la suppression");
       }
     }
   };
 
-  const handleAnalyze = (job: JobOffer) => {
-    setSelectedJob(job);
+  const handleAnalyze = async (job: JobOffer) => {
+    // Si l'offre n'est pas sauvegardée (pas de user_id), la sauvegarder d'abord
+    if (!job.user_id) {
+      try {
+        const savedJob = await jobOfferService.createJobOffer({
+          job_title: job.job_title,
+          company_name: job.company_name,
+          location: job.location,
+          job_type: job.job_type,
+          description: job.description,
+          source_url: job.source_url,
+          source_platform: job.source_platform
+        });
+        
+        // Mettre à jour dans le state en utilisant source_url comme clé
+        setJobs(prevJobs => prevJobs.map(j => 
+          j.source_url === job.source_url && j.job_title === job.job_title
+            ? { ...savedJob }
+            : j
+        ));
+        
+        // Utiliser l'offre sauvegardée pour l'analyse
+        setSelectedJob(savedJob);
+      } catch (error) {
+        console.error("Erreur de sauvegarde avant analyse:", error);
+        alert("❌ Impossible de sauvegarder l'offre pour l'analyse");
+        return;
+      }
+    } else {
+      setSelectedJob(job);
+    }
+    
     setShowAnalysisModal(true);
   };
 
@@ -155,6 +236,13 @@ export default function JobsPage() {
     setSelectedJobForDetails(job);
     setShowDetailsModal(true);
   };
+
+  // Filtrer les offres selon le filtre actif
+  const filteredJobs = jobs.filter(job => {
+    if (filter === "saved") return job.user_id;
+    if (filter === "unsaved") return !job.user_id;
+    return true;
+  });
 
   if (loading && jobs.length === 0 && searchStatus === "idle") {
     return (
@@ -197,28 +285,85 @@ export default function JobsPage() {
           </div>
         )}
 
+        {/* Filtres */}
+        <div className="flex gap-3 justify-between items-center">
+          <div className="flex gap-3">
+            <Button
+              variant={filter === "all" ? "default" : "outline"}
+              onClick={() => setFilter("all")}
+              className="flex items-center gap-2"
+            >
+              Tout
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+                {jobs.length}
+              </span>
+            </Button>
+            <Button
+              variant={filter === "saved" ? "default" : "outline"}
+              onClick={() => setFilter("saved")}
+              className="flex items-center gap-2"
+            >
+              Sauvegardées
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+                {jobs.filter(j => j.user_id).length}
+              </span>
+            </Button>
+            <Button
+              variant={filter === "unsaved" ? "default" : "outline"}
+              onClick={() => setFilter("unsaved")}
+              className="flex items-center gap-2"
+            >
+              Non sauvegardées
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+                {jobs.filter(j => !j.user_id).length}
+              </span>
+            </Button>
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadSavedJobs}
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Recharger mes offres
+          </Button>
+        </div>
+
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">
-            {jobs.length} offre{jobs.length > 1 ? "s" : ""} trouvée{jobs.length > 1 ? "s" : ""}
+            {filteredJobs.length} offre{filteredJobs.length > 1 ? "s" : ""} {
+              filter === "saved" ? "sauvegardée" : 
+              filter === "unsaved" ? "non sauvegardée" : 
+              "trouvée"
+            }{filteredJobs.length > 1 ? "s" : ""}
           </h2>
           <Button onClick={() => router.push("/jobs/add")}>
             + Ajouter une offre manuellement
           </Button>
         </div>
 
-        {jobs.length === 0 && !loading ? (
+        {filteredJobs.length === 0 && !loading ? (
           <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">Aucune offre trouvée</p>
+            <p className="text-gray-500 mb-2">
+              {filter === "all" && "Aucune offre trouvée"}
+              {filter === "saved" && "Aucune offre sauvegardée"}
+              {filter === "unsaved" && "Aucune offre non sauvegardée"}
+            </p>
             <p className="text-sm text-gray-400">
-              Essayez d&apos;autres mots-clés ou ajoutez une offre manuellement
+              {filter === "all" && "Essayez d'autres mots-clés ou ajoutez une offre manuellement"}
+              {filter === "saved" && "Sauvegardez des offres pour les retrouver ici"}
+              {filter === "unsaved" && "Toutes les offres ont été sauvegardées"}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
+            {filteredJobs.map((job, index) => (
               <JobOfferCard
-                key={job.id}
+                key={job.id || `${job.source_url}-${job.job_title}-${index}`}
                 job={job}
                 onClick={() => handleViewDetails(job)}
                 onSave={() => handleSave(job)}

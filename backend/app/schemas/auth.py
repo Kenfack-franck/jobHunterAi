@@ -110,3 +110,18 @@ class UserUpdate(BaseModel):
             }
         }
     }
+
+
+class PasswordUpdate(BaseModel):
+    """Schéma pour la mise à jour du mot de passe"""
+    current_password: str = Field(..., description="Mot de passe actuel")
+    new_password: str = Field(..., min_length=8, max_length=72, description="Nouveau mot de passe (8-72 caractères)")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "current_password": "CurrentPassword123!",
+                "new_password": "NewSecurePassword456!"
+            }
+        }
+    }

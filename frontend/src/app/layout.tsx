@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProfileProvider } from '@/contexts/ProfileContext'
 import { AppShell } from '@/components/layout/AppShell'
+import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,6 +25,7 @@ export default function RootLayout({
         <AuthProvider>
           <ProfileProvider>
             <AppShell>{children}</AppShell>
+            <FeedbackButton />
             <Toaster position="top-right" richColors />
           </ProfileProvider>
         </AuthProvider>

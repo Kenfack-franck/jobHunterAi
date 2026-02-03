@@ -3,6 +3,7 @@ Applications API endpoints
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db, get_current_user
@@ -68,7 +69,7 @@ async def get_applications_stats(
 
 @router.get("/{application_id}", response_model=ApplicationResponse)
 async def get_application(
-    application_id: int,
+    application_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -90,7 +91,7 @@ async def get_application(
 
 @router.put("/{application_id}", response_model=ApplicationResponse)
 async def update_application(
-    application_id: int,
+    application_id: UUID,
     update_data: ApplicationUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -114,7 +115,7 @@ async def update_application(
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_application(
-    application_id: int,
+    application_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

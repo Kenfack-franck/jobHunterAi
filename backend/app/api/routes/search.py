@@ -29,9 +29,9 @@ async def search_with_scraping(
             user_id=str(current_user.id)
         )
         formatted_offers = [OfferResponse(
-            title=o.get("title", ""), company=o.get("company", ""),
+            job_title=o.get("job_title", ""), company_name=o.get("company_name", ""),
             location=o.get("location", ""), description=o.get("description", "")[:500],
-            url=o.get("url", ""), source_platform=o.get("source_platform", ""),
+            source_url=o.get("source_url", ""), source_platform=o.get("source_platform", ""),
             job_type=o.get("job_type"), work_mode=o.get("work_mode"),
             scraped_at=o.get("scraped_at").isoformat() if isinstance(o.get("scraped_at"), datetime) else o.get("scraped_at")
         ) for o in result.get("offers", [])]
@@ -39,9 +39,13 @@ async def search_with_scraping(
         return SearchResponse(
             success=result["success"], offers=formatted_offers, count=result["count"],
             scraped_count=result.get("scraped_count"), deduplicated_count=result.get("deduplicated_count"),
-            saved_count=result.get("saved_count"), platforms_scraped=result.get("platforms_scraped"),
+            saved_count=result.get("saved_count"), 
+            platforms_scraped=result.get("platforms_scraped"),  # Deprecated
+            sources_used=result.get("sources_used"),  # New multi-source field
+            cached=result.get("cached", False),  # Cache indicator
             search_params=result.get("search_params"), scraped_at=result.get("scraped_at"),
-            duration_seconds=result.get("duration_seconds")
+            duration_seconds=result.get("duration_seconds"),
+            message=result.get("message")  # Message d'avertissement/info
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur scraping: {str(e)}")

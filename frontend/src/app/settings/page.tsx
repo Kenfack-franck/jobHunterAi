@@ -281,6 +281,33 @@ export default function SettingsPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>🔍 Sources de recherche</CardTitle>
+                <CardDescription>Configurez les plateformes à scraper</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Choisissez parmi 18 sources prédéfinies (agrégateurs et entreprises) 
+                  et définissez vos priorités pour des résultats plus rapides.
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                  <p className="font-medium text-blue-900">💡 Nouveau système multi-sources !</p>
+                  <p className="text-blue-700 mt-1">
+                    • 3 agrégateurs : RemoteOK, Welcome to the Jungle, LinkedIn<br />
+                    • 15 grandes entreprises françaises<br />
+                    • Cache intelligent pour des recherches instantanées
+                  </p>
+                </div>
+                <Button 
+                  className="w-full" 
+                  onClick={() => router.push('/settings/sources')}
+                >
+                  Configurer mes sources
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
 

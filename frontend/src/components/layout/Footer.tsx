@@ -19,7 +19,7 @@ export function Footer() {
               <h4 className="font-semibold mb-3">Produit</h4>
               <ul className="space-y-2 text-sm">
                 <li><Link href="/jobs" className="text-gray-600 hover:text-primary">Recherche d'emploi</Link></li>
-                <li><Link href="/companies/watch" className="text-gray-600 hover:text-primary">Veille entreprise</Link></li>
+                <li><Link href="/settings/sources" className="text-gray-600 hover:text-primary">Configuration sources</Link></li>
                 <li><Link href="/documents" className="text-gray-600 hover:text-primary">Documents générés</Link></li>
               </ul>
             </div>

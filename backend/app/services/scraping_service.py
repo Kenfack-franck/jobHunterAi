@@ -197,7 +197,8 @@ class ScrapingService:
         platform: str,
         keywords: str,
         location: str = "",
-        limit: int = 100
+        limit: int = 100,
+        company: Optional[str] = None
     ) -> List[Dict]:
         """
         Scrape une plateforme spécifique
@@ -207,6 +208,7 @@ class ScrapingService:
             keywords: Mots-clés de recherche
             location: Localisation
             limit: Nombre max d'offres
+            company: Nom de l'entreprise (pour filtre JSearch)
             
         Returns:
             List[Dict]: Liste d'offres
@@ -218,12 +220,22 @@ class ScrapingService:
         scraper = self._get_scraper(platform)
         
         try:
-            # Appeler scrape() du scraper
-            offers = await scraper.scrape(
-                keywords=keywords,
-                location=location if location else None,
-                max_results=limit
-            )
+            # Pour JSearch et Adzuna, passer le paramètre company si fourni
+            if platform in ["jsearch", "adzuna"] and company:
+                print(f"[ScrapingService] 🏢 {platform.upper()} avec filtre company='{company}'")
+                offers = await scraper.scrape(
+                    keywords=keywords,
+                    location=location if location else None,
+                    company=company,
+                    max_results=limit
+                )
+            else:
+                # Appeler scrape() du scraper normalement
+                offers = await scraper.scrape(
+                    keywords=keywords,
+                    location=location if location else None,
+                    max_results=limit
+                )
             return offers
         except Exception as e:
             print(f"❌ Erreur scraping {platform}: {e}")
@@ -272,6 +284,158 @@ class ScrapingService:
         print(f"\n✅ Total: {total_offers} offres trouvées sur {len(results)} plateformes")
         
         return results
+    
+    async def scrape_priority_sources(
+        self,
+        priority_sources: List[str],
+        keywords: str,
+        location: str = "",
+        limit_per_source: int = 100
+    ) -> Dict[str, List[Dict]]:
+        """
+        Scrape uniquement les sources prioritaires de l'utilisateur
+        
+        Args:
+            priority_sources: Liste des source_ids (ex: ["remoteok", "wttj", "airbus"])
+            keywords: Mots-clés de recherche
+            location: Localisation
+            limit_per_source: Limite par source
+            
+        Returns:
+            Dict[str, List[Dict]]: {source_id: [offers]}
+        """
+        results = {}
+        
+        print(f"[ScrapingService] Scraping {len(priority_sources)} sources prioritaires...")
+        
+        # Scraping parallèle des sources prioritaires uniquement
+        tasks = []
+        for source_id in priority_sources:
+            # Mapper source_id → platform_name
+            platform = self._map_source_to_platform(source_id)
+            if platform:
+                # Extraire le nom de l'entreprise depuis le source_id si c'est JSearch ou Adzuna
+                company_name = self._get_company_name(source_id) if platform in ["jsearch", "adzuna"] else None
+                
+                task = self.scrape_platform(
+                    platform,
+                    keywords,
+                    location,
+                    limit_per_source,
+                    company=company_name  # Passer le nom de l'entreprise
+                )
+                tasks.append((source_id, task))
+            else:
+                print(f"⚠️ Source {source_id} non mappée à une plateforme")
+        
+        # Attendre tous les scrapings
+        for source_id, task in tasks:
+            try:
+                offers = await task
+                results[source_id] = offers
+                print(f"✅ {source_id}: {len(offers)} offres")
+            except Exception as e:
+                print(f"❌ Erreur scraping {source_id}: {e}")
+                results[source_id] = []
+        
+        total_offers = sum(len(offers) for offers in results.values())
+        print(f"\n✅ Total prioritaires: {total_offers} offres sur {len(results)} sources")
+        
+        return results
+    
+    def _get_company_name(self, source_id: str) -> Optional[str]:
+        """
+        Extraire le nom de l'entreprise depuis le source_id pour le filtre JSearch
+        
+        Args:
+            source_id: ID de la source (ex: "capgemini", "loreal")
+            
+        Returns:
+            Nom de l'entreprise pour la recherche (ex: "Capgemini", "L'Oréal")
+        """
+        company_mapping = {
+            # Tech
+            "capgemini": "Capgemini",
+            "sopra_steria": "Sopra Steria",
+            "dassault_systemes": "Dassault Systemes",
+            
+            # Aérospatial
+            "airbus": "Airbus",
+            "thales": "Thales",
+            "dassault_aviation": "Dassault Aviation",
+            "safran": "Safran",
+            
+            # Énergie
+            "totalenergies": "TotalEnergies",
+            "edf": "EDF",
+            
+            # Automobile
+            "renault": "Renault",
+            "stellantis": "Stellantis",
+            
+            # Luxe
+            "lvmh": "LVMH",
+            "loreal": "L'Oréal",
+            
+            # Banque
+            "bnp_paribas": "BNP Paribas",
+            "societe_generale": "Société Générale",
+            
+            # Telecom
+            "orange": "Orange",
+        }
+        
+        return company_mapping.get(source_id)
+    
+    def _map_source_to_platform(self, source_id: str) -> Optional[str]:
+        """
+        Mapper un source_id (predefined_sources.py) → platform_name (scraper existant)
+        
+        Args:
+            source_id: ID de la source prédéfinie (ex: "remoteok", "wttj", "airbus")
+            
+        Returns:
+            Nom de la plateforme pour le scraper ou None si non supporté
+        """
+        # Mapping des sources prédéfinies vers les scrapers existants
+        mapping = {
+            # Agrégateurs (scrapers existants)
+            "remoteok": "remoteok",           # ✅ Scraping direct RemoteOK
+            "wttj": "welcometothejungle",     # À implémenter
+            "linkedin": "adzuna",             # Via Adzuna (agrégateur)
+            
+            # Entreprises Tech (via Adzuna - filtre company)
+            "capgemini": "adzuna",            # Adzuna(company="Capgemini")
+            "sopra_steria": "adzuna",         # Adzuna(company="Sopra Steria")
+            "dassault_systemes": "adzuna",    # Adzuna(company="Dassault Systemes")
+            
+            # Aérospatial (via Adzuna)
+            "airbus": "adzuna",               # Adzuna(company="Airbus")
+            "thales": "adzuna",               # Adzuna(company="Thales")
+            "dassault_aviation": "adzuna",    # Adzuna(company="Dassault Aviation")
+            "safran": "adzuna",               # Adzuna(company="Safran")
+            
+            # Énergie (via Adzuna)
+            "totalenergies": "adzuna",        # Adzuna(company="TotalEnergies")
+            "edf": "adzuna",                  # Adzuna(company="EDF")
+            
+            # Automobile (via Adzuna)
+            "renault": "adzuna",              # Adzuna(company="Renault")
+            "stellantis": "adzuna",           # Adzuna(company="Stellantis")
+            
+            # Luxe (via Adzuna)
+            "lvmh": "adzuna",                 # Adzuna(company="LVMH")
+            "loreal": "adzuna",               # Adzuna(company="L'Oréal")
+            
+            # Banque (via Adzuna)
+            "bnp_paribas": "adzuna",          # Adzuna(company="BNP Paribas")
+            "societe_generale": "adzuna",     # Adzuna(company="Société Générale")
+            
+            # Telecom (via Adzuna)
+            "orange": "adzuna",               # Adzuna(company="Orange")
+        }
+        
+        return mapping.get(source_id)
 
 
 # Instance globale

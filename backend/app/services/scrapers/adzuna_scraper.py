@@ -90,19 +90,21 @@ class AdzunaScraper(BaseScraper):
         """
         offers = []
         
+        # Si company fourni, l'ajouter aux keywords (Adzuna ne supporte pas le paramètre company séparé)
+        search_keywords = keywords or ""
+        if company:
+            search_keywords = f"{search_keywords} {company}".strip()
+            print(f"[Adzuna] Recherche avec filtrage: '{search_keywords}'")
+        
         # Construire les paramètres de recherche
         params = {
             "app_id": self.app_id,
             "app_key": self.app_key,
             "results_per_page": min(self.max_results_per_page, max_results),
-            "what": keywords or "",  # Mots-clés
-            "where": location or "",  # Localisation
+            "what": search_keywords,  # Mots-clés + entreprise
+            "where": location or "France",  # Localisation (par défaut France)
             "content-type": "application/json"
         }
-        
-        # Filtre entreprise (si fourni)
-        if company:
-            params["company"] = company
         
         try:
             async with aiohttp.ClientSession() as session:

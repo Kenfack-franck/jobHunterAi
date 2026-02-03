@@ -373,3 +373,99 @@ async def get_search_status(
             "message": f"État inconnu: {task.state}",
             "state": task.state
         }
+
+
+from pydantic import BaseModel
+
+class ParseTextRequest(BaseModel):
+    text: str
+
+
+@router.post("/parse-text", response_model=JobOfferResponse)
+async def parse_job_text(
+    request: ParseTextRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Parse du texte brut d'une offre d'emploi avec l'IA pour extraire les informations structurées.
+    
+    L'utilisateur colle le texte complet de l'offre (titre, entreprise, description, compétences, etc.)
+    et l'IA extrait automatiquement les champs : titre, entreprise, localisation, type de contrat,
+    description, compétences requises, mots-clés.
+    """
+    try:
+        from app.services.ai_service import AIService
+        import re
+        import json
+        
+        text = request.text
+        
+        if not text or len(text.strip()) < 100:
+            raise HTTPException(
+                status_code=400,
+                detail="Le texte est trop court. Collez l'offre complète."
+            )
+        
+        # Utiliser l'IA pour extraire les informations
+        ai_service = AIService()
+        
+        prompt = f"""Analyse cette offre d'emploi et extrait les informations suivantes au format JSON:
+- job_title: Le titre du poste
+- company_name: Le nom de l'entreprise
+- location: La localisation (ville, pays)
+- job_type: Le type de contrat (CDI, CDD, Stage, Alternance, Freelance, etc.)
+- description: Une description concise du poste (300 mots max)
+- requirements: Les compétences et qualifications requises
+- extracted_keywords: Liste des technologies/compétences clés (max 10)
+- source_url: L'URL si présente dans le texte, sinon vide
+
+Texte de l'offre:
+{text[:3000]}
+
+Réponds uniquement avec un objet JSON valide, sans markdown."""
+
+        # Appeler l'IA
+        response = await ai_service.generate_text(prompt, max_tokens=2000)
+        
+        # Nettoyer la réponse (enlever les markdown code blocks si présents)
+        cleaned_response = response.strip()
+        if cleaned_response.startswith("```"):
+            cleaned_response = re.sub(r'^```json?\s*|\s*```$', '', cleaned_response, flags=re.MULTILINE)
+        
+        parsed_data = json.loads(cleaned_response)
+        
+        # Créer l'offre avec les données extraites
+        offer_data = JobOfferCreate(
+            job_title=parsed_data.get("job_title", "Titre à compléter"),
+            company_name=parsed_data.get("company_name", ""),
+            location=parsed_data.get("location", ""),
+            job_type=parsed_data.get("job_type", ""),
+            description=parsed_data.get("description", text[:500]),
+            requirements=parsed_data.get("requirements", ""),
+            source_url=parsed_data.get("source_url", ""),
+            source_platform="Text Import",
+            extracted_keywords=parsed_data.get("extracted_keywords", [])[:10]
+        )
+        
+        # Retourner les données extraites (sans sauvegarder en DB)
+        return JobOfferResponse(
+            **offer_data.model_dump(),
+            id=str(UUID(int=0)),  # ID temporaire
+            user_id=current_user.id,
+            created_at=datetime.utcnow(),
+            analyzed_at=None
+        )
+        
+    except json.JSONDecodeError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur de parsing de la réponse de l'IA: {str(e)}"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'analyse du texte: {str(e)}"
+        )

@@ -95,6 +95,18 @@ export function JobDetailsModal({
               </div>
             )}
             
+            {job.work_mode && (
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-gray-500" />
+                <Badge variant="outline">
+                  {job.work_mode === 'remote' && '🏠 Télétravail'}
+                  {job.work_mode === 'hybrid' && '🔀 Hybride'}
+                  {job.work_mode === 'onsite' && '🏢 Présentiel'}
+                  {!['remote', 'hybrid', 'onsite'].includes(job.work_mode) && job.work_mode}
+                </Badge>
+              </div>
+            )}
+            
             {job.salary && (
               <div className="flex items-center gap-2 text-sm">
                 <DollarSign className="w-4 h-4 text-gray-500" />
@@ -174,11 +186,11 @@ export function JobDetailsModal({
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 pt-4 border-t">
-            {job.apply_url && (
+            {(job.apply_url || job.source_url) && (
               <Button 
                 variant="default" 
                 className="flex-1"
-                onClick={() => window.open(job.apply_url, '_blank')}
+                onClick={() => window.open(job.apply_url || job.source_url, '_blank')}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Postuler sur {job.source_platform || 'le site'}

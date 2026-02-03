@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import Link from 'next/link';
@@ -11,13 +11,12 @@ import { ContactModal } from '@/components/contact/ContactModal';
 export default function Home() {
   const router = useRouter();
   const [showContactModal, setShowContactModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Rediriger vers dashboard si déjà connecté
+  // Détecter l'authentification côté client uniquement (évite l'erreur d'hydratation)
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      router.push("/dashboard");
-    }
-  }, [router]);
+    setIsAuthenticated(authService.isAuthenticated());
+  }, []);
 
   const features = [
     {
@@ -55,54 +54,98 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* NAVBAR */}
-      <nav className="border-b bg-white/80 backdrop-blur-sm fixed top-0 w-full z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-            Job Hunter AI
-          </h1>
-          <div className="flex items-center gap-4">
-            <Link href="#features"><Button variant="ghost">Fonctionnalités</Button></Link>
-            <Link href="#how-it-works"><Button variant="ghost">Comment ça marche</Button></Link>
-            <Link href="/auth/login"><Button variant="outline">Se connecter</Button></Link>
-            <Link href="/auth/register"><Button>Commencer →</Button></Link>
+      <nav className="border-b bg-white/80 backdrop-blur-sm fixed top-0 w-full z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl">🎯</span>
+            <div>
+              <h1 className="font-bold text-lg sm:text-xl lg:text-2xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                Job Hunter AI
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Votre assistant IA de recherche d'emploi</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 sm:gap-3">
+            {isAuthenticated ? (
+              <Link href="/dashboard">
+                <Button size="sm" className="text-sm sm:text-base">
+                  <span className="hidden sm:inline">Mon Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" size="sm" className="text-sm sm:text-base">
+                    <span className="hidden sm:inline">Se connecter</span>
+                    <span className="sm:hidden">Login</span>
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button size="sm" className="text-sm sm:text-base">
+                    <span className="hidden sm:inline">Commencer gratuitement</span>
+                    <span className="sm:hidden">Signup</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
 
       {/* HERO SECTION */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-6xl mx-auto text-center space-y-8">
-          <div className="inline-block px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-sm mb-4">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-6xl mx-auto text-center space-y-6 sm:space-y-8">
+          <div className="inline-block px-3 sm:px-4 py-2 bg-primary/10 rounded-full text-primary font-semibold text-xs sm:text-sm mb-4">
             🚀 L'assistant IA qui révolutionne la recherche d'emploi
           </div>
-          <h1 className="text-6xl md:text-7xl font-extrabold leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight px-2">
             Trouvez votre job de rêve<br />
             <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               en 10x moins de temps
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Job Hunter AI automatise votre recherche d'emploi : scraping multi-sources, génération de CV/LM personnalisés par IA, et envoi de candidatures en un clic. Concentrez-vous sur les entretiens, on gère le reste.
           </p>
-          <div className="flex justify-center gap-4 pt-4">
-            <Link href="/auth/register">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Commencer gratuitement →
-              </Button>
-            </Link>
-            <Link href="#how-it-works">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Voir comment ça marche
-              </Button>
-            </Link>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-4 px-4">
+            {isAuthenticated ? (
+              <>
+                <Link href="/jobs" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6">
+                    Rechercher des offres →
+                  </Button>
+                </Link>
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6">
+                    Accéder au Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/register" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6">
+                    Commencer gratuitement →
+                  </Button>
+                </Link>
+                <Link href="#how-it-works" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6">
+                    <span className="hidden sm:inline">Voir comment ça marche</span>
+                    <span className="sm:hidden">En savoir plus</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
-          <div className="flex justify-center gap-8 pt-8">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8 pt-6 sm:pt-8 px-4">
             {stats.map((stat, idx) => (
               <div key={idx} className="text-center">
-                <p className="text-4xl font-bold text-primary">{stat.value}</p>
-                <p className="text-gray-600">{stat.label}</p>
+                <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">{stat.value}</p>
+                <p className="text-sm sm:text-base text-gray-600">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -110,13 +153,13 @@ export default function Home() {
       </section>
 
       {/* FEATURES SECTION */}
-      <section id="features" className="py-20 px-6 bg-white">
+      <section id="features" className="py-12 sm:py-20 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Fonctionnalités qui changent la donne</h2>
-            <p className="text-gray-600 text-lg">Tout ce qu'il vous faut pour réussir votre recherche d'emploi</p>
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Fonctionnalités qui changent la donne</h2>
+            <p className="text-gray-600 text-base sm:text-lg">Tout ce qu'il vous faut pour réussir votre recherche d'emploi</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
             {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
@@ -136,20 +179,20 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-20 px-6 bg-gray-50">
+      <section id="how-it-works" className="py-12 sm:py-20 px-4 sm:px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Comment ça marche ?</h2>
-            <p className="text-gray-600 text-lg">3 étapes simples pour décrocher votre prochain job</p>
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Comment ça marche ?</h2>
+            <p className="text-gray-600 text-base sm:text-lg">3 étapes simples pour décrocher votre prochain job</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {steps.map((step, idx) => (
               <div key={idx} className="text-center">
-                <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary text-white rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold mx-auto mb-3 sm:mb-4">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.desc}</p>
+                <h3 className="text-lg sm:text-xl font-bold mb-2">{step.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -157,15 +200,25 @@ export default function Home() {
       </section>
 
       {/* CTA SECTION */}
-      <section className="py-20 px-6 bg-gradient-to-r from-primary to-blue-600 text-white">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h2 className="text-4xl md:text-5xl font-bold">Prêt à transformer votre recherche d'emploi ?</h2>
-          <p className="text-xl text-blue-100">Rejoignez les professionnels qui utilisent l'IA pour trouver leur job idéal</p>
-          <Link href="/auth/register">
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 bg-white text-primary hover:bg-gray-100">
-              Créer mon compte gratuitement →
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-r from-primary to-blue-600 text-white">
+        <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold px-2">Prêt à transformer votre recherche d'emploi ?</h2>
+          <p className="text-base sm:text-lg md:text-xl text-blue-100 px-4">Rejoignez les professionnels qui utilisent l'IA pour trouver leur job idéal</p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+            <Link href="/auth/register" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 bg-white text-primary hover:bg-gray-100">
+                Créer mon compte gratuitement →
+              </Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowContactModal(true)}
+              className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 border-white text-white hover:bg-white/10"
+            >
+              Nous contacter
             </Button>
-          </Link>
+          </div>
         </div>
       </section>
 

@@ -13,15 +13,58 @@ from difflib import SequenceMatcher
 from app.models.job_offer import JobOffer
 from app.models.profile import Profile
 from app.models.user_feed_cache import UserFeedCache
+from app.models.user_source_preferences import UserSourcePreferences
 from app.services.scraping_service import scraping_service
 from app.services.ai_service import ai_service
+from app.services.search_cache_service import search_cache_service
+from app.core.predefined_sources import get_default_enabled_sources
+
+
 class SearchService:
     """Service de recherche d'offres avec scraping et feed personnalisé"""
     
     def __init__(self):
         self.scraping_service = scraping_service
         self.ai_service = ai_service
+        self.cache_service = search_cache_service
         self.deduplication_threshold = 0.9  # 90% similarité pour considérer comme doublon
+    
+    async def _get_user_preferences(
+        self,
+        db: AsyncSession,
+        user_id: Optional[str]
+    ) -> Optional[UserSourcePreferences]:
+        """
+        Récupère les préférences de sources de l'utilisateur
+        Si n'existent pas, crée des préférences par défaut
+        """
+        if not user_id:
+            return None
+        
+        stmt = select(UserSourcePreferences).where(
+            UserSourcePreferences.user_id == user_id
+        )
+        result = await db.execute(stmt)
+        prefs = result.scalar_one_or_none()
+        
+        if not prefs:
+            # Créer préférences par défaut
+            default_sources = get_default_enabled_sources()
+            prefs = UserSourcePreferences(
+                user_id=user_id,
+                enabled_sources=default_sources,
+                priority_sources=default_sources[:3],  # 3 premiers
+                use_cache=True,
+                cache_ttl_hours=24,
+                max_priority_sources=3,
+                background_scraping_enabled=True
+            )
+            db.add(prefs)
+            await db.commit()
+            await db.refresh(prefs)
+            print(f"[SearchService] ✨ Préférences par défaut créées pour user {user_id}")
+        
+        return prefs
     
     async def search_with_scraping(
         self,
@@ -35,7 +78,9 @@ class SearchService:
         user_id: Optional[str] = None
     ) -> Dict:
         """
-        Recherche d'offres avec scraping des plateformes activées
+        Recherche d'offres avec scraping personnalisé et cache
+        
+        NOUVEAU : Intègre UserSourcePreferences et cache
         
         Args:
             db: Session DB
@@ -45,34 +90,113 @@ class SearchService:
             work_mode: Mode de travail (remote, hybrid, onsite)
             company: Nom d'entreprise spécifique
             limit_per_platform: Limite d'offres par plateforme
-            user_id: ID utilisateur (pour audit)
+            user_id: ID utilisateur (pour préférences et cache)
         
         Returns:
             Dict avec offres, statistiques et métadonnées
         """
         start_time = datetime.utcnow()
         
-        # 1. Scraping depuis toutes les plateformes activées
-        print(f"[SearchService] Début scraping: keywords={keywords}, location={location}")
+        print(f"[SearchService] 🔍 Recherche: keywords={keywords}, location={location}, user={user_id}")
         
-        raw_results = await self.scraping_service.scrape_all_platforms(
-            keywords=keywords,
-            location=location or "",
-            limit_per_platform=limit_per_platform
-        )
+        # 1. NOUVEAU : Récupérer préférences utilisateur
+        user_prefs = await self._get_user_preferences(db, user_id)
         
-        # Aplatir les résultats (dict[platform] -> list)
+        # Déterminer les sources à utiliser
+        if user_prefs and user_prefs.enabled_sources is not None:
+            # Utiliser les sources activées (même si liste vide)
+            sources_to_use = user_prefs.enabled_sources
+            priority_sources = user_prefs.priority_sources or []
+            use_cache = user_prefs.use_cache
+            cache_ttl = user_prefs.cache_ttl_hours
+            
+            if sources_to_use:
+                print(f"[SearchService] 📋 Sources activées: {len(sources_to_use)} sources")
+                print(f"[SearchService] ⚡ Sources prioritaires (scraping temps réel): {priority_sources}")
+            else:
+                print(f"[SearchService] ⚠️  Aucune source activée - Recherche annulée")
+        else:
+            # Fallback : utiliser toutes les plateformes (ancien comportement)
+            sources_to_use = None
+            priority_sources = []
+            use_cache = False
+            cache_ttl = 24
+            print(f"[SearchService] 📋 Mode classique (toutes les plateformes)")
+        
+        # 2. NOUVEAU : Vérifier cache si activé
+        if use_cache and user_id:
+            cache_key = self.cache_service.generate_cache_key(
+                user_id=user_id,
+                keywords=keywords,
+                location=location,
+                job_type=job_type,
+                work_mode=work_mode,
+                company=company,
+                sources=sources_to_use
+            )
+            
+            cached_results = await self.cache_service.get_cached_results(db, cache_key)
+            if cached_results:
+                print(f"[SearchService] ⚡ Résultats depuis cache (instantané)")
+                return cached_results
+        
+        # 3. Scraping (sources activées avec gestion priorités)
+        if sources_to_use is not None:
+            # Cas où l'utilisateur a des préférences
+            if not sources_to_use:
+                # Liste vide = aucune source activée
+                print(f"[SearchService] ⚠️  Aucune source activée - Retour résultats vides")
+                return {
+                    "success": True,
+                    "offers": [],
+                    "count": 0,
+                    "scraped_count": 0,
+                    "deduplicated_count": 0,
+                    "saved_count": 0,
+                    "sources_used": [],
+                    "cached": False,
+                    "search_params": {
+                        "keywords": keywords,
+                        "location": location,
+                        "job_type": job_type,
+                        "work_mode": work_mode,
+                        "company": company
+                    },
+                    "scraped_at": datetime.utcnow().isoformat(),
+                    "duration_seconds": 0,
+                    "message": "Aucune source n'est activée. Veuillez activer au moins une source dans les paramètres."
+                }
+            
+            # NOUVEAU : Scraper les sources activées par l'utilisateur
+            raw_results = await self.scraping_service.scrape_priority_sources(
+                priority_sources=sources_to_use,  # Toutes les sources activées
+                keywords=keywords,
+                location=location or "",
+                limit_per_source=limit_per_platform
+            )
+        else:
+            # ANCIEN : Scraper toutes les plateformes (si pas de préférences)
+            raw_results = await self.scraping_service.scrape_all_platforms(
+                keywords=keywords,
+                location=location or "",
+                limit_per_platform=limit_per_platform
+            )
+        
+        # Aplatir les résultats (dict[platform/source] -> list)
         all_offers = []
-        for platform, offers in raw_results.items():
+        for source, offers in raw_results.items():
             all_offers.extend(offers)
         
         print(f"[SearchService] {len(all_offers)} offres brutes récupérées")
         
-        # 2. Déduplication
+        # Normaliser les champs des offres (title -> job_title, company -> company_name, url -> source_url)
+        all_offers = self._normalize_offer_fields(all_offers)
+        
+        # 4. Déduplication (inchangé)
         deduplicated_offers = await self.deduplicate_offers(all_offers)
         print(f"[SearchService] {len(deduplicated_offers)} offres après déduplication")
         
-        # 3. Filtrage par critères (si spécifiés)
+        # 5. Filtrage par critères (inchangé)
         filtered_offers = self._filter_offers(
             deduplicated_offers,
             job_type=job_type,
@@ -81,14 +205,34 @@ class SearchService:
         )
         print(f"[SearchService] {len(filtered_offers)} offres après filtrage")
         
-        # 4. Sauvegarde en DB + génération embeddings
+        # 6. Sauvegarde en DB + génération embeddings (inchangé)
         saved_count = await self._save_offers_to_db(db, filtered_offers)
         print(f"[SearchService] {saved_count} offres sauvegardées en DB")
         
-        # 5. Préparer la réponse
+        # 7. Calcul durée d'exécution
         end_time = datetime.utcnow()
         duration = (end_time - start_time).total_seconds()
         
+        # 8. NOUVEAU : Sauvegarder en cache si activé
+        if use_cache and user_id:
+            await self.cache_service.save_to_cache(
+                db=db,
+                cache_key=cache_key,
+                user_id=user_id,
+                keywords=keywords,
+                location=location,
+                job_type=job_type,
+                work_mode=work_mode,
+                company=company,
+                sources_used=sources_to_use or list(raw_results.keys()),
+                results=filtered_offers,
+                scraped_count=len(all_offers),
+                deduplicated_count=len(deduplicated_offers),
+                execution_time_seconds=int(duration),
+                ttl_hours=cache_ttl
+            )
+        
+        # 9. Préparer la réponse
         return {
             "success": True,
             "offers": filtered_offers,
@@ -96,7 +240,8 @@ class SearchService:
             "scraped_count": len(all_offers),
             "deduplicated_count": len(deduplicated_offers),
             "saved_count": saved_count,
-            "platforms_scraped": list(raw_results.keys()),
+            "sources_used": sources_to_use or list(raw_results.keys()),
+            "cached": False,
             "search_params": {
                 "keywords": keywords,
                 "location": location,
@@ -228,8 +373,8 @@ class SearchService:
             offer = item["offer"]
             formatted_offers.append({
                 "id": str(offer.id),
-                "title": offer.title,
-                "company": offer.company,
+                "title": offer.job_title,
+                "company": offer.company_name,
                 "location": offer.location,
                 "description": offer.description[:500] if offer.description else "",
                 "url": offer.source_url,
@@ -268,13 +413,13 @@ class SearchService:
         
         for offer in offers:
             # Déduplication par URL (exact)
-            url = offer.get("url", "")
+            url = offer.get("source_url", "")
             if url and url in seen_urls:
                 continue
             
             # Déduplication par signature (titre + entreprise)
-            title = offer.get("title", "").lower().strip()
-            company = offer.get("company", "").lower().strip()
+            title = offer.get("job_title", "").lower().strip()
+            company = offer.get("company_name", "").lower().strip()
             signature = f"{title}|{company}"
             
             # Vérifier similarité avec signatures existantes
@@ -292,6 +437,38 @@ class SearchService:
                 seen_signatures.add(signature)
         
         return deduplicated
+    
+    
+    def _normalize_offer_fields(self, offers: List[Dict]) -> List[Dict]:
+        """
+        Normalise les noms de champs des offres scrapées
+        Convertit: title -> job_title, company -> company_name, url -> source_url
+        """
+        print(f"[SearchService] 🔄 Normalisation de {len(offers)} offres...")
+        normalized = []
+        for offer in offers:
+            # Créer une copie pour ne pas modifier l'original
+            normalized_offer = offer.copy()
+            
+            # Mapper title -> job_title
+            if "title" in normalized_offer and "job_title" not in normalized_offer:
+                normalized_offer["job_title"] = normalized_offer.pop("title")
+                print(f"[SearchService]   ✅ title → job_title")
+            
+            # Mapper company -> company_name
+            if "company" in normalized_offer and "company_name" not in normalized_offer:
+                normalized_offer["company_name"] = normalized_offer.pop("company")
+                print(f"[SearchService]   ✅ company → company_name")
+            
+            # Mapper url -> source_url
+            if "url" in normalized_offer and "source_url" not in normalized_offer:
+                normalized_offer["source_url"] = normalized_offer.pop("url")
+                print(f"[SearchService]   ✅ url → source_url")
+            
+            normalized.append(normalized_offer)
+        
+        print(f"[SearchService] ✅ Normalisation terminée")
+        return normalized
     
     def _filter_offers(
         self,
@@ -311,7 +488,7 @@ class SearchService:
         
         if company:
             filtered = [o for o in filtered 
-                       if company.lower() in o.get("company", "").lower()]
+                       if company.lower() in o.get("company_name", "").lower()]
         
         return filtered
     
@@ -340,8 +517,8 @@ class SearchService:
                 # Vérifier si offre existe déjà
                 existing_query = select(JobOffer).where(
                     or_(
-                        JobOffer.source_url == offer_data.get("url"),
-                        JobOffer.title == offer_data.get("title")
+                        JobOffer.source_url == offer_data.get("source_url"),
+                        JobOffer.job_title == offer_data.get("job_title")
                     )
                 ).limit(1)
                 result = await db.execute(existing_query)
@@ -433,10 +610,10 @@ class SearchService:
     def _offer_to_dict(self, offer: JobOffer) -> Dict:
         """Convertit une offre en dict pour AI"""
         return {
-            "title": offer.title,
+            "title": offer.job_title,
             "description": offer.description or "",
             "requirements": offer.requirements or "",
-            "company": offer.company,
+            "company": offer.company_name,
             "location": offer.location
         }
     async def search_hybrid(

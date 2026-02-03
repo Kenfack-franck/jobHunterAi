@@ -212,7 +212,9 @@ export interface JobOffer {
   source?: "database" | "scraping";  // Distingue offres DB vs offres scrapées temporaires
   extracted_keywords?: string[];
   analyzed_at?: string;
-  created_at: string;
+  created_at?: string;  // Pour offres sauvegardées
+  posted_date?: string;  // Pour offres scrapées
+  scraped_at?: string;  // Pour offres scrapées
 }
 
 export interface JobOfferCreate {

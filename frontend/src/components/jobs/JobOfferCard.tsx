@@ -14,9 +14,15 @@ interface JobOfferCardProps {
 }
 
 export function JobOfferCard({ job, onClick, onEdit, onDelete, onAnalyze, onSave }: JobOfferCardProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Date inconnue";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Date inconnue";
+      return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    } catch {
+      return "Date inconnue";
+    }
   };
 
   // Fonction pour nettoyer le HTML et extraire le texte
@@ -58,21 +64,28 @@ export function JobOfferCard({ job, onClick, onEdit, onDelete, onAnalyze, onSave
           </div>
           <div className="flex flex-col gap-1 items-end">
             {job.job_type && <Badge variant="secondary" className="text-xs">{job.job_type}</Badge>}
-            {getSourceBadge(job.source_platform)}
+            {job.company_name && (
+              <Badge variant="outline" className="text-xs">
+                🏢 {job.company_name}
+              </Badge>
+            )}
           </div>
         </div>
         
         <div className="space-y-1 text-sm text-muted-foreground">
-          {job.company_name && (
-            <div className="flex items-center gap-1">
-              <Building2 className="w-3 h-3" />
-              <span className="font-medium">{job.company_name}</span>
-            </div>
-          )}
           {job.location && (
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <MapPin className="w-3 h-3" />
               <span>{job.location}</span>
+            </div>
+          )}
+          {job.work_mode && (
+            <div className="flex items-center gap-1 text-xs">
+              <Badge variant="outline" className="text-xs">
+                {job.work_mode === 'remote' && '🏠 Télétravail'}
+                {job.work_mode === 'hybrid' && '🔀 Hybride'}
+                {job.work_mode === 'onsite' && '🏢 Présentiel'}
+              </Badge>
             </div>
           )}
         </div>
@@ -101,7 +114,7 @@ export function JobOfferCard({ job, onClick, onEdit, onDelete, onAnalyze, onSave
         )}
 
         <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
-          <span>Ajoutée le {formatDate(job.created_at)}</span>
+          <span>Ajoutée le {formatDate(job.posted_date || job.scraped_at || job.created_at)}</span>
           {job.source_url && (
             <a 
               href={job.source_url} 

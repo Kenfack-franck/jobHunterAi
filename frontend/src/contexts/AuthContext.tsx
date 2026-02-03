@@ -88,8 +88,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const refreshUser = useCallback(async () => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    try {
+      if (authService.isAuthenticated()) {
+        // Récupérer les infos à jour depuis l'API
+        const updatedUser = await authService.getCurrentUser();
+        setUser(updatedUser);
+        
+        // Mettre à jour le localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement du profil:', error);
+    }
   }, []);
 
   return (

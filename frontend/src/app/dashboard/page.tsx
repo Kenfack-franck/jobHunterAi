@@ -86,6 +86,27 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>⚙️ Mes sources</CardTitle>
+              <CardDescription>Personnalisez votre recherche</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-gray-600 mb-4 space-y-1">
+                <p>18 sources disponibles</p>
+                <p className="text-xs">• 3 agrégateurs (RemoteOK, WTTJ, LinkedIn)</p>
+                <p className="text-xs">• 15 grandes entreprises françaises</p>
+              </div>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => router.push("/settings/sources")}
+              >
+                Configurer
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>🤖 Documents IA</CardTitle>
               <CardDescription>CV et lettres personnalisés</CardDescription>
             </CardHeader>

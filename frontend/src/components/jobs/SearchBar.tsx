@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Briefcase, MapPin, Building2, Wifi } from "lucide-react";
+import { Loader2, Briefcase, MapPin, Wifi } from "lucide-react";
 
 interface SearchBarProps {
   onSearch: (params: {
     keyword?: string;
     location?: string;
     job_type?: string;
+    work_mode?: string;
     company_name?: string;
   }) => void;
   loading?: boolean;
@@ -19,35 +20,23 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
   const [city, setCity] = useState("");
   const [workMode, setWorkMode] = useState("");
   const [jobType, setJobType] = useState("");
-  const [companyName, setCompanyName] = useState("");
 
   const handleSearch = () => {
     // Construire le keyword: job title
     const keyword = jobTitle || undefined;
     
-    // Construire la location: city ou work mode
-    let location = undefined;
-    if (workMode && workMode !== "all") {
-      location = workMode; // "remote", "onsite", "hybrid"
-    } else if (city) {
-      location = city; // "Paris", "Lyon", etc.
-    }
+    // Location = vraie localisation géographique
+    const location = city || undefined;
+    
+    // Work mode = mode de travail séparé
+    const work_mode = (workMode && workMode !== "all") ? workMode : undefined;
     
     onSearch({
       keyword,
       location,
+      work_mode,
       job_type: jobType || undefined,
-      company_name: companyName || undefined,
     });
-  };
-
-  const handleReset = () => {
-    setJobTitle("");
-    setCity("");
-    setWorkMode("");
-    setJobType("");
-    setCompanyName("");
-    onSearch({});
   };
 
   return (
@@ -58,47 +47,30 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
           Recherche d&apos;offres d&apos;emploi
         </h2>
         <p className="text-sm text-gray-600">
-          🌐 Recherche hybride : base de données locale + scraping Internet (RemoteOK)
+          🎯 Recherche multi-sources : Utilise vos sources sélectionnées (Capgemini, Sopra, Dassault, L&apos;Oréal...) + RemoteOK
+        </p>
+        <p className="text-xs text-blue-600 mt-1">
+          💡 Astuce : Essayez &quot;Développeur&quot;, &quot;Ingénieur&quot;, &quot;Data&quot; ou &quot;Cloud&quot; pour de meilleurs résultats
         </p>
       </div>
       
-      {/* Ligne 1: Poste + Entreprise */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Briefcase className="inline w-4 h-4 mr-1" />
-            Intitulé du poste
-          </label>
-          <Input
-            placeholder="Ex: Data Scientist, Développeur Python..."
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            disabled={loading}
-            className="h-11"
-          />
-          <p className="text-xs text-gray-500 mt-1.5">
-            Le titre du poste que vous recherchez
-          </p>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Building2 className="inline w-4 h-4 mr-1" />
-            Entreprise <span className="text-gray-400 font-normal">(optionnel)</span>
-          </label>
-          <Input
-            placeholder="Ex: Google, Microsoft..."
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            disabled={loading}
-            className="h-11"
-          />
-          <p className="text-xs text-gray-500 mt-1.5">
-            Filtrer par entreprise spécifique
-          </p>
-        </div>
+      {/* Ligne 1: Poste uniquement */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          <Briefcase className="inline w-4 h-4 mr-1" />
+          Intitulé du poste
+        </label>
+        <Input
+          placeholder="Ex: Data Scientist, Développeur Python..."
+          value={jobTitle}
+          onChange={(e) => setJobTitle(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+          disabled={loading}
+          className="h-11"
+        />
+        <p className="text-xs text-gray-500 mt-1.5">
+          Le titre du poste que vous recherchez
+        </p>
       </div>
 
       {/* Ligne 2: Mode de travail + Ville */}
@@ -138,7 +110,7 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
             className="h-11"
           />
           <p className="text-xs text-gray-500 mt-1.5">
-            Laissez vide si &quot;Télétravail&quot; sélectionné
+            📍 Localisation géographique (Paris, Lyon, France...)
           </p>
         </div>
       </div>
@@ -167,11 +139,11 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
         </p>
       </div>
       
-      {/* Boutons d'action */}
-      <div className="flex gap-3 pt-2">
+      {/* Bouton d'action */}
+      <div className="pt-2">
         <Button 
           onClick={handleSearch} 
-          className="flex-1 h-11 text-base font-semibold" 
+          className="w-full h-12 text-base font-semibold" 
           disabled={loading}
         >
           {loading ? (
@@ -184,14 +156,6 @@ export function SearchBar({ onSearch, loading }: SearchBarProps) {
               🔍 Lancer la recherche
             </>
           )}
-        </Button>
-        <Button 
-          onClick={handleReset} 
-          variant="outline" 
-          className="h-11 px-6"
-          disabled={loading}
-        >
-          🔄 Réinitialiser
         </Button>
       </div>
       

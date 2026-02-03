@@ -45,7 +45,7 @@ class JobOffer(Base):
     # Relations
     user = relationship("User", back_populates="job_offers")
     generated_documents = relationship("GeneratedDocument", back_populates="job_offer", cascade="all, delete-orphan")
+    applications = relationship("Application", back_populates="job_offer", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<JobOffer {self.job_title} @ {self.company_name}>"
-    applications = relationship("Application", back_populates="job_offer")

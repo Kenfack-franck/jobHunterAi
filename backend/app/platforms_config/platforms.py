@@ -4,9 +4,9 @@ SUPPORTED_PLATFORMS = {
     "indeed": {"name": "Indeed", "base_url": "https://fr.indeed.com", "enabled": False},
     "welcometothejungle": {"name": "WTTJ", "base_url": "https://www.welcometothejungle.com", "enabled": False},
     "remoteok": {"name": "RemoteOK", "base_url": "https://remoteok.com", "enabled": True},
-    "adzuna": {"name": "Adzuna", "base_url": "https://www.adzuna.fr", "enabled": False},  # Nécessite clés API
+    "adzuna": {"name": "Adzuna", "base_url": "https://www.adzuna.fr", "enabled": True},  # API avec demo keys
     "themuse": {"name": "The Muse", "base_url": "https://www.themuse.com", "enabled": True},
-    "jsearch": {"name": "JSearch", "base_url": "https://jsearch.p.rapidapi.com", "enabled": False},  # Nécessite clé RapidAPI
+    "jsearch": {"name": "JSearch", "base_url": "https://jsearch.p.rapidapi.com", "enabled": True},  # Nécessite clé RapidAPI
 }
 
 def get_enabled_platforms():

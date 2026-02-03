@@ -30,7 +30,7 @@ class JSearchScraper(BaseScraper):
         self.api_key = os.getenv("RAPIDAPI_KEY", "VOTRE_CLE_RAPIDAPI")
         
         self.max_results_per_page = 10  # JSearch max 10 par page
-        self.max_offers = 100
+        self.max_offers = 3  # LIMITE À 3 pour les tests (changeable ensuite)
     
     async def scrape(
         self,
