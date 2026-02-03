@@ -156,11 +156,15 @@ export default function LoginPage() {
                 </div>
               </div>
               
-              <Link href="/auth/register" className="w-full">
-                <Button variant="outline" className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors">
+              <Button 
+                variant="outline" 
+                className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                asChild
+              >
+                <Link href="/auth/register">
                   Créer un compte
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardFooter>
           </form>
         </Card>

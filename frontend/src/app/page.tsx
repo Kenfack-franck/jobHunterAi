@@ -195,7 +195,7 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                {/* Uncomment when image is ready:
+                
                 <Image 
                   src="/hero.jpg" 
                   alt="Job Hunter AI Dashboard" 
@@ -203,7 +203,7 @@ export default function Home() {
                   className="object-cover rounded-3xl shadow-2xl"
                   priority
                 />
-                */}
+                
               </div>
               
               {/* Floating Elements */}

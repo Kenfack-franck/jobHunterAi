@@ -226,11 +226,15 @@ export default function RegisterPage() {
               </div>
             </div>
             
-            <Link href="/auth/login" className="w-full">
-              <Button variant="outline" className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors">
+            <Button 
+              variant="outline" 
+              className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors"
+              asChild
+            >
+              <Link href="/auth/login">
                 Se connecter
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardFooter>
         </form>
       </Card>
