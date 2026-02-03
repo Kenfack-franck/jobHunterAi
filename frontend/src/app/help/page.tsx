@@ -418,12 +418,17 @@ export default function HelpPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex gap-3">
-          <Link href="/contact">
-            <Button variant="secondary" className="gap-2 bg-white hover:bg-gray-100">
-              <Mail className="h-4 w-4" />
-              Contacter le support
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            className="gap-2 bg-white hover:bg-gray-100 text-gray-900 border-white"
+            onClick={() => {
+              const feedbackBtn = document.querySelector('[data-feedback-button]') as HTMLElement;
+              if (feedbackBtn) feedbackBtn.click();
+            }}
+          >
+            <Mail className="h-4 w-4" />
+            Contacter le support
+          </Button>
           <Button 
             variant="outline" 
             className="gap-2 border-white text-white hover:bg-white/10"
