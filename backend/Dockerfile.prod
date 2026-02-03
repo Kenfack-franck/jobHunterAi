@@ -23,6 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Code application
 COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini .
 
 # Variables d'environnement par défaut
 ENV PYTHONUNBUFFERED=1
