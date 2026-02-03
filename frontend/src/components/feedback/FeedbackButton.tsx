@@ -67,6 +67,7 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
       {/* Bouton flottant */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-feedback-button
         className={`
           fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50
           w-12 h-12 sm:w-14 sm:h-14 rounded-full
