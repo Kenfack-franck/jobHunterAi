@@ -159,11 +159,10 @@ export default function LoginPage() {
               <Button 
                 variant="outline" 
                 className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors"
-                asChild
+                onClick={() => router.push('/auth/register')}
+                type="button"
               >
-                <Link href="/auth/register">
-                  Créer un compte
-                </Link>
+                Créer un compte
               </Button>
             </CardFooter>
           </form>

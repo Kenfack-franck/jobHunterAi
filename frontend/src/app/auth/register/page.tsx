@@ -229,11 +229,10 @@ export default function RegisterPage() {
             <Button 
               variant="outline" 
               className="w-full h-11 border-2 hover:border-purple-400 hover:bg-purple-50 transition-colors"
-              asChild
+              onClick={() => router.push('/auth/login')}
+              type="button"
             >
-              <Link href="/auth/login">
-                Se connecter
-              </Link>
+              Se connecter
             </Button>
           </CardFooter>
         </form>
