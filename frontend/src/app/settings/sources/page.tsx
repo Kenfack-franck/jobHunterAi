@@ -57,7 +57,9 @@ export default function SourcesPage() {
       
       console.log('[Sources] 🔑 Token chargement:', token.substring(0, 20) + '...');
 
-      const sourcesRes = await fetch('http://localhost:8000/api/v1/sources/predefined', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      
+      const sourcesRes = await fetch(`${API_URL}/sources/predefined`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -72,7 +74,7 @@ export default function SourcesPage() {
       const sourcesData = await sourcesRes.json();
       setSources(sourcesData);
 
-      const prefsRes = await fetch('http://localhost:8000/api/v1/sources/preferences', {
+      const prefsRes = await fetch(`${API_URL}/sources/preferences`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -162,7 +164,9 @@ export default function SourcesPage() {
       console.log('[Sources] 💾 Sauvegarde des préférences...', preferences);
       console.log('[Sources] 🔑 Token présent:', token.substring(0, 20) + '...');
       
-      const response = await fetch('http://localhost:8000/api/v1/sources/preferences', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      
+      const response = await fetch(`${API_URL}/sources/preferences`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
