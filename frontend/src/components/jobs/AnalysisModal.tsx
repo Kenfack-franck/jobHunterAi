@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Loader2, FileText, Mail, CheckCircle2, ExternalLink } from "lucide-react";
+import { Loader2, FileText, Mail, CheckCircle2, ExternalLink, Sparkles } from "lucide-react";
 import { documentsService, Document } from "@/lib/documentsService";
 import profileService from "@/lib/profile";
 import { Profile } from "@/types";
@@ -172,76 +172,105 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/95 border-2 border-purple-200/50 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Analyse de compatibilité</DialogTitle>
-          <DialogDescription>
-            {jobTitle} • {companyName}
-          </DialogDescription>
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center shadow-lg animate-pulse">
+              <Sparkles className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                ✨ Analyse de compatibilité
+              </DialogTitle>
+              <DialogDescription className="text-base mt-1 font-medium text-gray-600">
+                {jobTitle} {companyName && `• ${companyName}`}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 mt-6">
           {/* Score de compatibilité */}
-          <div className="bg-gray-50 p-6 rounded-lg text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative w-32 h-32">
-                <svg className="transform -rotate-90 w-32 h-32">
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 border-2 border-purple-200 shadow-lg text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative w-40 h-40">
+                <svg className="transform -rotate-90 w-40 h-40">
                   <circle
-                    cx="64"
-                    cy="64"
-                    r="56"
+                    cx="80"
+                    cy="80"
+                    r="70"
                     stroke="#e5e7eb"
-                    strokeWidth="8"
+                    strokeWidth="12"
                     fill="none"
                   />
                   <circle
-                    cx="64"
-                    cy="64"
-                    r="56"
-                    stroke="currentColor"
-                    strokeWidth="8"
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="url(#gradient)"
+                    strokeWidth="12"
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 56}`}
-                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - (compatibilityScore || 0) / 100)}`}
-                    className={getScoreColor(compatibilityScore || 0).replace('bg-', 'text-')}
+                    strokeDasharray={`${2 * Math.PI * 70}`}
+                    strokeDashoffset={`${2 * Math.PI * 70 * (1 - (compatibilityScore || 0) / 100)}`}
                     strokeLinecap="round"
+                    className="transition-all duration-1000"
                   />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#8b5cf6" />
+                      <stop offset="50%" stopColor="#ec4899" />
+                      <stop offset="100%" stopColor="#3b82f6" />
+                    </linearGradient>
+                  </defs>
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
                   {loadingScore ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
                   ) : compatibilityScore !== null ? (
-                    <span className="text-3xl font-bold">{compatibilityScore}%</span>
+                    <>
+                      <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                        {compatibilityScore}%
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-xl text-gray-400">--</span>
+                    <span className="text-2xl text-gray-400">--</span>
                   )}
                 </div>
               </div>
             </div>
             {compatibilityScore !== null && (
-              <Badge className={getScoreColor(compatibilityScore)}>
+              <Badge className={`${getScoreColor(compatibilityScore)} text-white border-0 shadow-lg text-base px-4 py-2`}>
                 {getScoreLabel(compatibilityScore)}
               </Badge>
             )}
             {loadingScore && (
-              <p className="text-sm text-gray-500 mt-2">Calcul du score avec l'IA...</p>
+              <p className="text-sm text-purple-600 mt-3 font-medium animate-pulse">
+                🤖 Calcul du score avec l'IA...
+              </p>
             )}
           </div>
 
           {/* Sélection du profil */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
+          <div className="p-5 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
+            <label className="block text-sm font-bold mb-3 flex items-center gap-2 text-gray-700">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <FileText className="w-3 h-3 text-white" />
+              </div>
               Profil à utiliser pour postuler
             </label>
             {loading ? (
-              <div className="text-sm text-gray-500">Chargement des profils...</div>
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Chargement des profils...</span>
+              </div>
             ) : profiles.length === 0 ? (
-              <div className="text-sm text-red-500">
-                Vous devez créer un profil avant de générer des documents
+              <div className="bg-red-50 border-2 border-red-200 text-red-700 p-3 rounded-lg text-sm flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <span>Vous devez créer un profil avant de générer des documents</span>
               </div>
             ) : (
               <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                <SelectTrigger>
+                <SelectTrigger className="border-2 border-blue-300 hover:border-blue-400 bg-white">
                   <SelectValue placeholder="Sélectionner un profil" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,49 +285,64 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
           </div>
 
           {/* Analyse IA (placeholder) */}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm">Analyse IA</h3>
-            <div className="space-y-1 text-sm">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
-                <span>Compétences techniques correspondent bien</span>
+          <div className="p-5 rounded-xl bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-md">
+                <CheckCircle2 className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
-                <span>Expérience alignée avec les exigences</span>
+              <h3 className="font-bold text-base bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Analyse détaillée
+              </h3>
+            </div>
+            <div className="h-px bg-gradient-to-r from-green-200 to-transparent mb-4" />
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 border border-green-200">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <span className="text-gray-700">Compétences techniques correspondent bien</span>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="w-4 h-4 text-yellow-500 mt-0.5">⚠️</span>
-                <span>Points à améliorer : certifications manquantes</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 border border-green-200">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <span className="text-gray-700">Expérience alignée avec les exigences</span>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                <span className="text-xl mt-0.5 flex-shrink-0">⚠️</span>
+                <span className="text-gray-700">Points à améliorer : certifications manquantes</span>
               </div>
             </div>
           </div>
 
           {/* Erreur */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 text-red-700 px-5 py-4 rounded-xl shadow-lg flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">❌</span>
+              <span className="font-medium">{error}</span>
             </div>
           )}
 
           {/* Documents générés */}
           {generatedDocs && (
-            <div className="bg-green-50 border border-green-200 p-4 rounded-lg space-y-3">
-              <div className="flex items-center gap-2 text-green-700 font-medium">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Documents générés avec succès !</span>
+            <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 p-6 rounded-2xl shadow-xl space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
+                  <CheckCircle2 className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  ✅ Documents générés avec succès !
+                </span>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {generatedDocs.cv && (
-                  <div className="flex items-center justify-between bg-white p-3 rounded border">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      <span className="text-sm font-medium">{generatedDocs.cv.filename}</span>
+                  <div className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">{generatedDocs.cv.filename}</span>
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
                       onClick={() => handleDownload(generatedDocs.cv!.id, generatedDocs.cv!.filename)}
                     >
                       Télécharger
@@ -307,14 +351,16 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
                 )}
 
                 {generatedDocs.coverLetter && (
-                  <div className="flex items-center justify-between bg-white p-3 rounded border">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm font-medium">{generatedDocs.coverLetter.filename}</span>
+                  <div className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">{generatedDocs.coverLetter.filename}</span>
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
                       onClick={() => handleDownload(generatedDocs.coverLetter!.id, generatedDocs.coverLetter!.filename)}
                     >
                       Télécharger
@@ -326,7 +372,7 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
               {/* Bouton pour aller voir tous les documents */}
               <Button
                 variant="outline"
-                className="w-full mt-3"
+                className="w-full mt-4 border-2 border-green-400 hover:bg-green-50 hover:border-green-500"
                 onClick={() => {
                   onOpenChange(false);
                   router.push('/documents');
@@ -340,11 +386,13 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
 
           {/* Message de progression pendant la génération */}
           {generating && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg flex items-start gap-3">
-              <Loader2 className="w-5 h-5 animate-spin mt-0.5" />
-              <div className="flex-1 text-sm">
-                <p className="font-medium mb-1">⏳ Génération en cours...</p>
-                <p className="text-xs opacity-75">
+            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-300 text-blue-800 p-5 rounded-2xl shadow-lg flex items-start gap-4">
+              <Loader2 className="w-7 h-7 animate-spin mt-0.5 text-purple-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-bold text-base mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  ⏳ Génération en cours...
+                </p>
+                <p className="text-sm text-gray-600">
                   L'IA personnalise vos documents. Cela peut prendre 1-2 minutes. Veuillez patienter.
                 </p>
               </div>
@@ -352,8 +400,13 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-4">
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-full mb-3" />
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="border-2 border-gray-300 hover:border-gray-400"
+            >
               Fermer
             </Button>
             
@@ -361,6 +414,7 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
               <Button 
                 onClick={handleGenerate}
                 disabled={generating || profiles.length === 0 || !selectedProfileId}
+                className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
               >
                 {generating ? (
                   <>
@@ -369,7 +423,7 @@ export function AnalysisModal({ open, onOpenChange, jobId, jobTitle, companyName
                   </>
                 ) : (
                   <>
-                    <FileText className="w-4 h-4 mr-2" />
+                    <Sparkles className="w-4 h-4 mr-2" />
                     Générer les documents
                   </>
                 )}

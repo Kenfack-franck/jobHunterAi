@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -89,20 +89,25 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
 
       {/* Modal de feedback */}
       {isOpen && (
-        <Card className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-[420px] max-w-md shadow-2xl border-2">
-          <CardHeader className="bg-gradient-to-r from-primary to-blue-600 text-white">
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Votre avis compte !
-            </CardTitle>
-            <CardDescription className="text-white/90">
-              Partagez vos idées pour améliorer l'application
+        <Card className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-[450px] max-w-md shadow-2xl border-2 border-purple-200 backdrop-blur-xl bg-white/95">
+          <CardHeader className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <MessageCircle className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl font-bold">Votre avis compte !</CardTitle>
+            </div>
+            <CardDescription className="text-white/90 font-medium">
+              💡 Partagez vos idées pour améliorer l'application
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-6 space-y-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-bold mb-2 block flex items-center gap-2 text-gray-700">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Mail className="w-3 h-3 text-white" />
+                  </div>
                   Votre email
                 </label>
                 <Input
@@ -110,17 +115,21 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
                   placeholder="votre@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
+                  className="w-full border-2 border-blue-200 focus:border-purple-400"
                 />
                 {user?.email && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Votre email est pré-rempli. Vous pouvez le modifier si besoin.
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <span>💡</span>
+                    <span>Votre email est pré-rempli. Vous pouvez le modifier si besoin.</span>
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label className="text-sm font-bold mb-2 block flex items-center gap-2 text-gray-700">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                    <MessageCircle className="w-3 h-3 text-white" />
+                  </div>
                   Votre retour
                 </label>
                 <Textarea
@@ -128,7 +137,7 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={5}
-                  className="w-full resize-none"
+                  className="w-full resize-none border-2 border-pink-200 focus:border-rose-400"
                 />
               </div>
 
@@ -137,14 +146,14 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
                   type="button"
                   variant="outline"
                   onClick={() => setIsOpen(false)}
-                  className="flex-1"
+                  className="flex-1 border-2 border-gray-300 hover:border-gray-400"
                   disabled={loading}
                 >
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 gap-2"
+                  className="flex-1 gap-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-lg"
                   disabled={loading || !message.trim()}
                 >
                   {loading ? (
@@ -160,36 +169,43 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
             </form>
 
             {/* Mes coordonnées */}
-            <div className="pt-4 border-t">
-              <p className="text-xs font-semibold text-gray-700 mb-3 text-center">
-                📞 Mes coordonnées
+            <div className="pt-4 border-t-2 border-gray-200">
+              <p className="text-sm font-bold text-gray-700 mb-3 text-center flex items-center justify-center gap-2">
+                <span className="text-lg">📞</span>
+                <span>Mes coordonnées</span>
               </p>
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <span>📧</span>
+              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-200 rounded-xl p-4 space-y-3 text-sm">
+                <div className="flex items-center gap-3 p-2 bg-white/60 rounded-lg hover:bg-white transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                    <Mail className="w-4 h-4 text-white" />
+                  </div>
                   <a 
                     href="mailto:kenfackfranck08@gmail.com" 
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline font-medium"
                   >
                     kenfackfranck08@gmail.com
                   </a>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span>📞</span>
+                <div className="flex items-center gap-3 p-2 bg-white/60 rounded-lg hover:bg-white transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                    <span className="text-white">📞</span>
+                  </div>
                   <a 
                     href="tel:+33780863790" 
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline font-medium"
                   >
                     +33 7 80 86 37 90
                   </a>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span>🌐</span>
+                <div className="flex items-center gap-3 p-2 bg-white/60 rounded-lg hover:bg-white transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                    <span className="text-white">🌐</span>
+                  </div>
                   <a 
                     href="https://franckkenfack.works" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline font-medium"
                   >
                     franckkenfack.works
                   </a>
@@ -197,8 +213,9 @@ export function FeedbackButton({ onOpenContactModal }: FeedbackButtonProps) {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 text-center pt-2">
-              💡 Votre feedback nous aide à améliorer l'expérience pour tous
+            <p className="text-xs text-gray-500 text-center pt-2 flex items-center justify-center gap-1">
+              <span>💡</span>
+              <span>Votre feedback nous aide à améliorer l'expérience pour tous</span>
             </p>
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import { SkillsList } from "@/components/profile/SkillsList";
 import { SkillForm } from "@/components/profile/SkillForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { User, Briefcase, GraduationCap, Wrench, Plus, Edit, ArrowLeft, Sparkles } from "lucide-react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -125,25 +126,40 @@ export default function ProfilePage() {
   const completion = profileService.calculateCompletion(profile);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4 space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Mon Profil</h1>
-          <Button variant="outline" onClick={() => router.push("/dashboard")}>
-            ← Dashboard
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30 py-8 relative">
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 space-y-8 relative z-10">
+        <div className="flex justify-between items-center bg-white/70 backdrop-blur-lg rounded-2xl p-6 border-2 border-purple-100 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-md">
+              <User className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Mon Profil
+            </h1>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/dashboard")} className="hover:border-purple-400 transition-all gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Dashboard
           </Button>
         </div>
 
-        <Card>
+        <Card className="border-2 border-purple-200 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
                 Profil complété à {completion}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all" 
+                className="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" 
                 style={{ width: completion + '%' }} 
               />
             </div>
@@ -157,16 +173,24 @@ export default function ProfilePage() {
             onCancel={() => setEditingProfile(false)} 
           />
         ) : (
-          <Card>
+          <Card className="border-2 border-blue-200 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all group">
             <CardHeader>
-              <div className="flex justify-between">
-                <div>
-                  <CardTitle>{profile.title}</CardTitle>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                      <User className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      {profile.title}
+                    </CardTitle>
+                  </div>
                   {profile.location && (
-                    <CardDescription>{profile.location}</CardDescription>
+                    <CardDescription className="text-base">{profile.location}</CardDescription>
                   )}
                 </div>
-                <Button onClick={() => setEditingProfile(true)}>
+                <Button onClick={() => setEditingProfile(true)} className="gap-2 shadow-md hover:shadow-lg transition-all">
+                  <Edit className="w-4 h-4" />
                   Modifier
                 </Button>
               </div>
@@ -200,15 +224,24 @@ export default function ProfilePage() {
         )}
 
         <div>
-          <div className="flex justify-between mb-4">
-            <h2 className="text-2xl font-bold">Expériences</h2>
-            <Button onClick={() => setExpFormOpen(true)}>+ Ajouter</Button>
+          <div className="flex justify-between items-center mb-4 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border-2 border-purple-100 shadow-sm">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Briefcase className="w-6 h-6 text-purple-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Expériences
+              </span>
+            </h2>
+            <Button onClick={() => setExpFormOpen(true)} className="gap-2 shadow-md hover:shadow-lg transition-all">
+              <Plus className="w-4 h-4" />
+              Ajouter
+            </Button>
           </div>
           <div className="space-y-4">
             {profile.experiences.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-gray-500">
-                  Aucune expérience
+              <Card className="border-2 border-dashed border-purple-200 bg-white/70 backdrop-blur-sm">
+                <CardContent className="py-12 text-center text-gray-500">
+                  <Briefcase className="w-12 h-12 text-purple-300 mx-auto mb-3" />
+                  <p>Aucune expérience</p>
                 </CardContent>
               </Card>
             ) : (
@@ -228,15 +261,24 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <div className="flex justify-between mb-4">
-            <h2 className="text-2xl font-bold">Formations</h2>
-            <Button onClick={() => setEduFormOpen(true)}>+ Ajouter</Button>
+          <div className="flex justify-between items-center mb-4 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border-2 border-blue-100 shadow-sm">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <GraduationCap className="w-6 h-6 text-blue-600" />
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Formations
+              </span>
+            </h2>
+            <Button onClick={() => setEduFormOpen(true)} className="gap-2 shadow-md hover:shadow-lg transition-all">
+              <Plus className="w-4 h-4" />
+              Ajouter
+            </Button>
           </div>
           <div className="space-y-4">
             {profile.educations.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-gray-500">
-                  Aucune formation
+              <Card className="border-2 border-dashed border-blue-200 bg-white/70 backdrop-blur-sm">
+                <CardContent className="py-12 text-center text-gray-500">
+                  <GraduationCap className="w-12 h-12 text-blue-300 mx-auto mb-3" />
+                  <p>Aucune formation</p>
                 </CardContent>
               </Card>
             ) : (

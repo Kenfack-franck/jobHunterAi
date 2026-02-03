@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { Save, AlertTriangle, Download, Trash2, Loader2 } from 'lucide-react';
+import { Save, AlertTriangle, Download, Trash2, Loader2, Settings as SettingsIcon, User, Bell, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { userService } from '@/lib/userService';
 import { useRouter } from 'next/navigation';
@@ -157,37 +157,57 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    { id: 'account', label: '👤 Compte', active: activeTab === 'account' },
-    { id: 'notifications', label: '🔔 Notifications', active: activeTab === 'notifications' },
-    { id: 'privacy', label: '🔒 Confidentialité', active: activeTab === 'privacy' }
+    { id: 'account', label: 'Compte', icon: User, active: activeTab === 'account' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, active: activeTab === 'notifications' },
+    { id: 'privacy', label: 'Confidentialité', icon: Shield, active: activeTab === 'privacy' }
   ];
 
   return (
     <ProtectedRoute>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">⚙️ Paramètres</h1>
-          <p className="text-gray-600 mt-1">Gérez votre compte et vos préférences</p>
+      <div className="space-y-6 min-h-screen relative">
+        {/* Animated background blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
 
-        <div className="flex gap-2 border-b">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={tab.active ? 'default' : 'ghost'}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className="rounded-b-none"
-            >
-              {tab.label}
-            </Button>
-          ))}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-3xl p-8 border-2 border-purple-100 shadow-lg relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 shadow-md">
+              <SettingsIcon className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent">
+              Paramètres
+            </h1>
+          </div>
+          <p className="text-gray-600 mt-2 text-lg ml-16">Gérez votre compte et vos préférences</p>
+        </div>
+
+        <div className="flex gap-2 border-b-2 border-purple-100 relative z-10 bg-white/70 backdrop-blur-sm rounded-t-2xl p-2 shadow-sm">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <Button
+                key={tab.id}
+                variant={tab.active ? 'default' : 'ghost'}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`rounded-b-none gap-2 transition-all ${tab.active ? 'shadow-md' : 'hover:bg-purple-50'}`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </Button>
+            );
+          })}
         </div>
 
         {activeTab === 'account' && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informations du compte</CardTitle>
+          <div className="space-y-6 relative z-10">
+            <Card className="border-2 border-purple-200 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-purple-600" />
+                  Informations du compte
+                </CardTitle>
                 <CardDescription>Modifiez vos informations personnelles</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -220,7 +240,7 @@ export default function SettingsPage() {
                     <option value="en">English</option>
                   </select>
                 </div>
-                <Button onClick={handleSaveAccount} disabled={isUpdating}>
+                <Button onClick={handleSaveAccount} disabled={isUpdating} className="shadow-md hover:shadow-lg transition-all">
                   {isUpdating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -236,9 +256,12 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Changer le mot de passe</CardTitle>
+            <Card className="border-2 border-blue-200 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  Changer le mot de passe
+                </CardTitle>
                 <CardDescription>Mettez à jour votre mot de passe</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -282,9 +305,12 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>🔍 Sources de recherche</CardTitle>
+            <Card className="border-2 border-green-200 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="w-5 h-5 text-green-600" />
+                  🔍 Sources de recherche
+                </CardTitle>
                 <CardDescription>Configurez les plateformes à scraper</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -301,7 +327,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Button 
-                  className="w-full" 
+                  className="w-full shadow-md hover:shadow-lg transition-all" 
                   onClick={() => router.push('/settings/sources')}
                 >
                   Configurer mes sources
@@ -312,10 +338,13 @@ export default function SettingsPage() {
         )}
 
         {activeTab === 'notifications' && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Préférences de notification</CardTitle>
+          <div className="space-y-6 relative z-10">
+            <Card className="border-2 border-blue-200 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-blue-600" />
+                  Préférences de notification
+                </CardTitle>
                 <CardDescription>Choisissez comment vous souhaitez être informé</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -337,7 +366,7 @@ export default function SettingsPage() {
                 ))}
               </CardContent>
             </Card>
-            <Button onClick={handleSaveNotifications} className="w-full md:w-auto">
+            <Button onClick={handleSaveNotifications} className="w-full md:w-auto shadow-md hover:shadow-lg transition-all">
               <Save className="mr-2 h-4 w-4" />
               Enregistrer les préférences
             </Button>
@@ -345,10 +374,13 @@ export default function SettingsPage() {
         )}
 
         {activeTab === 'privacy' && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Données RGPD</CardTitle>
+          <div className="space-y-6 relative z-10">
+            <Card className="border-2 border-blue-200 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="w-5 h-5 text-blue-600" />
+                  Données RGPD
+                </CardTitle>
                 <CardDescription>Exportez ou supprimez vos données</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -376,13 +408,13 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-red-200">
+            <Card className="border-2 border-red-300 shadow-lg bg-gradient-to-br from-red-50 to-orange-50 hover:shadow-xl transition-all">
               <CardHeader>
-                <CardTitle className="text-red-600 flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
+                <CardTitle className="text-red-700 flex items-center gap-2">
+                  <AlertTriangle className="h-6 w-6" />
                   Zone dangereuse
                 </CardTitle>
-                <CardDescription>Actions irréversibles</CardDescription>
+                <CardDescription className="text-red-600">Actions irréversibles</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="destructive" onClick={handleDeleteAccount} className="w-full">

@@ -9,7 +9,7 @@ import { AnalysisModal } from "@/components/jobs/AnalysisModal";
 import { JobDetailsModal } from "@/components/jobs/JobDetailsModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, CheckCircle2, XCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, AlertCircle, RefreshCw, Briefcase, Plus } from "lucide-react";
 
 export default function JobsPage() {
   const router = useRouter();
@@ -253,68 +253,81 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 relative">
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">🔍 Recherche d&apos;Offres</h1>
-          <Button variant="outline" onClick={() => router.push("/dashboard")}>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+              <Briefcase className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Recherche d&apos;Offres
+            </h1>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/dashboard")} className="hover:border-purple-400 transition-all">
             ← Retour
           </Button>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6 relative z-10">
         <SearchBar onSearch={handleSearch} loading={loading} />
 
         {/* Status Messages */}
         {searchStatus !== "idle" && (
-          <div className={`p-4 rounded-lg border flex items-center gap-3 ${
-            searchStatus === "searching" ? "bg-blue-50 border-blue-200 text-blue-800" :
-            searchStatus === "success" ? "bg-green-50 border-green-200 text-green-800" :
-            "bg-red-50 border-red-200 text-red-800"
+          <div className={`p-5 rounded-2xl border-2 flex items-center gap-3 shadow-lg backdrop-blur-sm transition-all ${
+            searchStatus === "searching" ? "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-300 text-blue-900" :
+            searchStatus === "success" ? "bg-gradient-to-r from-green-50 to-green-100 border-green-300 text-green-900" :
+            "bg-gradient-to-r from-red-50 to-red-100 border-red-300 text-red-900"
           }`}>
-            {searchStatus === "searching" && <Loader2 className="w-5 h-5 animate-spin" />}
-            {searchStatus === "success" && <CheckCircle2 className="w-5 h-5" />}
-            {searchStatus === "error" && <XCircle className="w-5 h-5" />}
+            {searchStatus === "searching" && <Loader2 className="w-6 h-6 animate-spin flex-shrink-0" />}
+            {searchStatus === "success" && <CheckCircle2 className="w-6 h-6 flex-shrink-0" />}
+            {searchStatus === "error" && <XCircle className="w-6 h-6 flex-shrink-0" />}
             <div className="flex-1">
-              <p className="font-medium">{searchMessage}</p>
+              <p className="font-semibold text-base">{searchMessage}</p>
               {scrapingProgress && searchStatus === "searching" && (
-                <p className="text-sm mt-1 opacity-75">{scrapingProgress}</p>
+                <p className="text-sm mt-1 opacity-80">{scrapingProgress}</p>
               )}
             </div>
           </div>
         )}
 
         {/* Filtres */}
-        <div className="flex gap-3 justify-between items-center">
-          <div className="flex gap-3">
+        <div className="flex gap-3 justify-between items-center flex-wrap">
+          <div className="flex gap-3 flex-wrap">
             <Button
               variant={filter === "all" ? "default" : "outline"}
               onClick={() => setFilter("all")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all ${filter === "all" ? "shadow-md" : "hover:border-purple-400"}`}
             >
               Tout
-              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              <span className={`${filter === "all" ? "bg-white/20" : "bg-purple-100 text-purple-700"} px-2 py-0.5 rounded-full text-sm font-semibold`}>
                 {jobs.length}
               </span>
             </Button>
             <Button
               variant={filter === "saved" ? "default" : "outline"}
               onClick={() => setFilter("saved")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all ${filter === "saved" ? "shadow-md" : "hover:border-green-400"}`}
             >
               Sauvegardées
-              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              <span className={`${filter === "saved" ? "bg-white/20" : "bg-green-100 text-green-700"} px-2 py-0.5 rounded-full text-sm font-semibold`}>
                 {jobs.filter(j => j.user_id).length}
               </span>
             </Button>
             <Button
               variant={filter === "unsaved" ? "default" : "outline"}
               onClick={() => setFilter("unsaved")}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 transition-all ${filter === "unsaved" ? "shadow-md" : "hover:border-blue-400"}`}
             >
               Non sauvegardées
-              <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              <span className={`${filter === "unsaved" ? "bg-white/20" : "bg-blue-100 text-blue-700"} px-2 py-0.5 rounded-full text-sm font-semibold`}>
                 {jobs.filter(j => !j.user_id).length}
               </span>
             </Button>
@@ -325,35 +338,38 @@ export default function JobsPage() {
             size="sm"
             onClick={loadSavedJobs}
             disabled={loading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 hover:border-purple-400 hover:shadow-md transition-all"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Recharger mes offres
           </Button>
         </div>
 
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
+        <div className="flex justify-between items-center bg-white/70 backdrop-blur-sm rounded-2xl p-5 border-2 border-purple-100 shadow-sm">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             {filteredJobs.length} offre{filteredJobs.length > 1 ? "s" : ""} {
               filter === "saved" ? "sauvegardée" : 
               filter === "unsaved" ? "non sauvegardée" : 
               "trouvée"
             }{filteredJobs.length > 1 ? "s" : ""}
           </h2>
-          <Button onClick={() => router.push("/jobs/add")}>
-            + Ajouter une offre manuellement
+          <Button onClick={() => router.push("/jobs/add")} className="gap-2 shadow-md hover:shadow-lg transition-all">
+            <Plus className="w-4 h-4" />
+            Ajouter manuellement
           </Button>
         </div>
 
         {filteredJobs.length === 0 && !loading ? (
-          <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">
+          <div className="text-center py-16 bg-white/70 backdrop-blur-sm rounded-3xl border-2 border-dashed border-purple-200 shadow-lg">
+            <div className="p-4 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+              <AlertCircle className="w-12 h-12 text-purple-500" />
+            </div>
+            <p className="text-gray-700 mb-2 text-lg font-semibold">
               {filter === "all" && "Aucune offre trouvée"}
               {filter === "saved" && "Aucune offre sauvegardée"}
               {filter === "unsaved" && "Aucune offre non sauvegardée"}
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-500 max-w-md mx-auto">
               {filter === "all" && "Essayez d'autres mots-clés ou ajoutez une offre manuellement"}
               {filter === "saved" && "Sauvegardez des offres pour les retrouver ici"}
               {filter === "unsaved" && "Toutes les offres ont été sauvegardées"}

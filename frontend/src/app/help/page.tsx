@@ -212,30 +212,42 @@ export default function HelpPage() {
   const categories = Array.from(new Set(faqs.map(f => f.category)));
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-12 px-4">
+    <div className="space-y-8 max-w-5xl mx-auto pb-12 px-4 min-h-screen relative">
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+      <div className="text-center mb-8 relative z-10">
+        <div className="inline-flex items-center justify-center mb-4">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+            <HelpCircle className="w-12 h-12 text-white" />
+          </div>
+        </div>
+        <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
           Centre d'aide Job Hunter AI
         </h1>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-xl max-w-2xl mx-auto">
           Tout ce que vous devez savoir pour maximiser votre recherche d'emploi
         </p>
       </div>
 
       {/* Search Bar */}
-      <Card className="border-2 border-primary/20">
+      <Card className="border-2 border-purple-200 shadow-xl bg-white/90 backdrop-blur-sm relative z-10">
         <CardContent className="pt-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-purple-400" />
             <Input
               placeholder="Rechercher : profil, sources, candidatures, IA..."
-              className="pl-10 h-12 text-base"
+              className="pl-12 h-14 text-base border-2 border-purple-100 focus:border-purple-400 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p className="text-xs text-gray-500 mt-3 text-center flex items-center justify-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-500" />
             💡 Essayez : "créer profil", "adzuna", "sauvegarder offre", "veille entreprise"
           </p>
         </CardContent>
@@ -243,30 +255,35 @@ export default function HelpPage() {
 
       {/* Quick Start Guide */}
       {!searchQuery && (
-        <Card className="bg-gradient-to-br from-blue-50 to-primary/5 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <PlayCircle className="h-7 w-7 text-primary" />
-              Guide de démarrage rapide
+        <Card className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-purple-200 shadow-xl relative z-10 overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+          <CardHeader className="relative z-10">
+            <CardTitle className="flex items-center gap-3 text-3xl">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+                <PlayCircle className="h-8 w-8 text-white" />
+              </div>
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Guide de démarrage rapide
+              </span>
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-base ml-14">
               Suivez ces 5 étapes pour commencer à utiliser Job Hunter AI efficacement
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="space-y-3">
               {quickStartGuide.map((step, index) => (
-                <div key={index} className="flex items-start gap-4 p-4 bg-white rounded-lg border hover:border-primary/50 transition-all group">
-                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                    <step.icon className="h-6 w-6 text-primary" />
+                <div key={index} className="flex items-start gap-4 p-5 bg-white/90 backdrop-blur-sm rounded-xl border-2 border-purple-100 hover:border-purple-300 hover:shadow-lg transition-all group">
+                  <div className="p-3 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl group-hover:from-blue-200 group-hover:to-purple-200 transition-colors shadow-md">
+                    <step.icon className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">{step.title}</h3>
                     <p className="text-sm text-gray-600">{step.description}</p>
                   </div>
                   {step.link && (
                     <Link href={step.link}>
-                      <Button variant="ghost" size="sm" className="gap-1">
+                      <Button variant="outline" size="sm" className="gap-2 hover:border-purple-400 transition-all shadow-sm">
                         Accéder
                         <ArrowRight className="h-4 w-4" />
                       </Button>
@@ -280,24 +297,32 @@ export default function HelpPage() {
       )}
 
       {/* Quick Links */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 relative z-10">
         <Link href="/contact">
-          <Card className="h-full hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group">
+          <Card className="h-full hover:shadow-xl hover:border-purple-300 transition-all cursor-pointer group border-2 border-purple-100 bg-gradient-to-br from-white to-purple-50/50 backdrop-blur-sm">
             <CardHeader>
-              <Mail className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
-              <CardTitle className="text-lg">Contacter le support</CardTitle>
-              <CardDescription>
+              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 w-fit mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <Mail className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Contacter le support
+              </CardTitle>
+              <CardDescription className="text-base">
                 Une question ? Contactez directement le développeur
               </CardDescription>
             </CardHeader>
           </Card>
         </Link>
 
-        <Card className="h-full hover:shadow-lg hover:border-blue-500/50 transition-all cursor-pointer group bg-gradient-to-br from-blue-50 to-transparent">
+        <Card className="h-full hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-100 backdrop-blur-sm">
           <CardHeader>
-            <Book className="h-8 w-8 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
-            <CardTitle className="text-lg">Documentation complète</CardTitle>
-            <CardDescription>
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 w-fit mb-3 group-hover:scale-110 transition-transform shadow-md">
+              <Book className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Documentation complète
+            </CardTitle>
+            <CardDescription className="text-base">
               Guides détaillés sur toutes les fonctionnalités
             </CardDescription>
           </CardHeader>
@@ -305,14 +330,17 @@ export default function HelpPage() {
       </div>
 
       {/* FAQ Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Questions Fréquentes</h2>
+      <div className="space-y-6 relative z-10">
+        <div className="flex items-center justify-between bg-white/70 backdrop-blur-sm rounded-2xl p-5 border-2 border-purple-100 shadow-sm">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Questions Fréquentes
+          </h2>
           {searchQuery && (
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => setSearchQuery('')}
+              className="hover:border-purple-400 transition-all"
             >
               Tout afficher
             </Button>
@@ -325,31 +353,37 @@ export default function HelpPage() {
 
           return (
             <div key={category}>
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                {category}
-              </h3>
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-5 border-2 border-purple-100 shadow-sm mb-4">
+                <h3 className="text-2xl font-bold flex items-center gap-2">
+                  <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    {category}
+                  </span>
+                </h3>
+              </div>
               <div className="space-y-3">
                 {categoryFaqs.map((faq, index) => {
                   const globalIndex = faqs.indexOf(faq);
                   const isOpen = openIndex === globalIndex;
 
                   return (
-                    <Card key={globalIndex} className="overflow-hidden hover:border-primary/30 transition-colors">
+                    <Card key={globalIndex} className="overflow-hidden hover:border-purple-300 hover:shadow-lg transition-all border-2 border-purple-100 bg-white/90 backdrop-blur-sm">
                       <button
                         className="w-full text-left"
                         onClick={() => setOpenIndex(isOpen ? null : globalIndex)}
                       >
-                        <CardHeader className="flex flex-row items-center justify-between hover:bg-gray-50 transition-colors">
+                        <CardHeader className="flex flex-row items-center justify-between hover:bg-purple-50/50 transition-colors">
                           <div className="flex items-start gap-3 flex-1">
-                            <HelpCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                            <CardTitle className="text-base font-medium pr-4">
+                            <div className="p-2 rounded-lg bg-purple-100">
+                              <HelpCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                            </div>
+                            <CardTitle className="text-base font-semibold pr-4 text-gray-800">
                               {faq.question}
                             </CardTitle>
                           </div>
                           {isOpen ? (
-                            <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                            <ChevronUp className="h-5 w-5 text-purple-500 flex-shrink-0" />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                            <ChevronDown className="h-5 w-5 text-purple-500 flex-shrink-0" />
                           )}
                         </CardHeader>
                       </button>
@@ -381,21 +415,23 @@ export default function HelpPage() {
         })}
 
         {filteredFaqs.length === 0 && (
-          <Card className="border-2 border-dashed">
-            <CardContent className="pt-6 text-center py-12">
-              <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2 text-lg">
+          <Card className="border-2 border-dashed border-purple-200 bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardContent className="pt-6 text-center py-16">
+              <div className="p-4 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Search className="h-10 w-10 text-purple-500" />
+              </div>
+              <p className="text-gray-700 mb-2 text-xl font-semibold">
                 Aucune question trouvée pour <strong>"{searchQuery}"</strong>
               </p>
-              <p className="text-gray-500 text-sm mb-4">
+              <p className="text-gray-500 text-base mb-6">
                 Essayez des termes plus généraux ou contactez le support
               </p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => setSearchQuery('')}>
+                <Button variant="outline" onClick={() => setSearchQuery('')} className="hover:border-purple-400">
                   Réinitialiser la recherche
                 </Button>
                 <Link href="/contact">
-                  <Button className="gap-2">
+                  <Button className="gap-2 shadow-md">
                     <MessageCircle className="h-4 w-4" />
                     Poser une question
                   </Button>
@@ -407,13 +443,14 @@ export default function HelpPage() {
       </div>
 
       {/* Contact Support CTA */}
-      <Card className="bg-gradient-to-r from-primary to-blue-600 text-white border-none">
-        <CardHeader>
-          <CardTitle className="text-white text-2xl flex items-center gap-2">
-            <MessageCircle className="h-6 w-6" />
+      <Card className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white border-none shadow-2xl relative z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-white text-3xl flex items-center gap-3">
+            <MessageCircle className="h-8 w-8" />
             Vous n'avez pas trouvé votre réponse ?
           </CardTitle>
-          <CardDescription className="text-blue-100">
+          <CardDescription className="text-blue-100 text-lg">
             Notre développeur est disponible pour vous aider directement
           </CardDescription>
         </CardHeader>
@@ -441,24 +478,24 @@ export default function HelpPage() {
       </Card>
 
       {/* Stats Footer */}
-      <Card className="bg-gray-50 border-dashed">
+      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 shadow-lg relative z-10">
         <CardContent className="pt-6">
           <div className="grid md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl font-bold text-primary mb-1">17</div>
-              <div className="text-sm text-gray-600">Sources d'offres</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1">17</div>
+              <div className="text-sm text-gray-700 font-medium">Sources d'offres</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary mb-1">1000+</div>
-              <div className="text-sm text-gray-600">Offres quotidiennes</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">1000+</div>
+              <div className="text-sm text-gray-700 font-medium">Offres quotidiennes</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary mb-1">2</div>
-              <div className="text-sm text-gray-600">IA (Gemini + GPT-4)</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent mb-1">2</div>
+              <div className="text-sm text-gray-700 font-medium">IA (Gemini + GPT-4)</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary mb-1">24/7</div>
-              <div className="text-sm text-gray-600">Veille automatique</div>
+              <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-1">24/7</div>
+              <div className="text-sm text-gray-700 font-medium">Veille automatique</div>
             </div>
           </div>
         </CardContent>
