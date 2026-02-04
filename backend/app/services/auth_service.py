@@ -103,7 +103,11 @@ class AuthService:
         """
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": str(user.id)},
+            data={
+                "sub": str(user.id),
+                "role": user.role,  # Inclure le rôle dans le token
+                "email": user.email
+            },
             expires_delta=access_token_expires
         )
         
