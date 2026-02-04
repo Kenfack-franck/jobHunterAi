@@ -80,7 +80,7 @@ class AdminService {
    * Récupère la liste des utilisateurs avec filtres
    */
   async getUsers(filters: AdminFilters = {}): Promise<UserListResponse> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const params = new URLSearchParams();
     if (filters.search) params.append('search', filters.search);
@@ -107,7 +107,7 @@ class AdminService {
    * Récupère les détails d'un utilisateur
    */
   async getUserDetail(userId: string): Promise<UserDetailResponse> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const response = await fetch(`${API_URL}/admin/users/${userId}`, {
       headers: {
@@ -127,7 +127,7 @@ class AdminService {
    * Bloquer/Débloquer un utilisateur
    */
   async toggleUserActive(userId: string): Promise<UserDetailResponse> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const response = await fetch(`${API_URL}/admin/users/${userId}/toggle-active`, {
       method: 'PUT',
@@ -148,7 +148,7 @@ class AdminService {
    * Supprimer un utilisateur
    */
   async deleteUser(userId: string): Promise<void> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const response = await fetch(`${API_URL}/admin/users/${userId}?confirm=yes`, {
       method: 'DELETE',
@@ -167,7 +167,7 @@ class AdminService {
    * Modifier les limites d'un utilisateur
    */
   async updateUserLimits(userId: string, limits: UpdateLimitsRequest): Promise<UserDetailResponse> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const response = await fetch(`${API_URL}/admin/users/${userId}/limits`, {
       method: 'PUT',
@@ -190,7 +190,7 @@ class AdminService {
    * Récupère les statistiques du dashboard admin
    */
   async getDashboardStats(): Promise<AdminDashboardStats> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     const response = await fetch(`${API_URL}/admin/stats`, {
       headers: {

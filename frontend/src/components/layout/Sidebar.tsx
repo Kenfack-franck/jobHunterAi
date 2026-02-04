@@ -24,7 +24,7 @@ export function Sidebar() {
   useEffect(() => {
     // Vérifier si l'utilisateur est admin via le token
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setIsAdmin(payload.role === 'admin');
