@@ -38,7 +38,7 @@ export default function LoginPage() {
       router.refresh(); // Force refresh pour mettre à jour le layout
     } catch (err: any) {
       console.error('Erreur de connexion:', err);
-      const errorMsg = err.response?.data?.detail || 'Email ou mot de passe incorrect';
+      const errorMsg = err.response?.data?.detail || err.message || 'Identifiants incorrects. Vérifiez votre email et mot de passe.';
       setError(errorMsg);
       toast.error(errorMsg);
     } finally {

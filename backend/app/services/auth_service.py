@@ -69,6 +69,9 @@ class AuthService:
             
         Returns:
             User si authentification réussie, None sinon
+            
+        Raises:
+            ValueError: Si le compte est bloqué
         """
         # Récupérer l'utilisateur
         result = await db.execute(
@@ -85,7 +88,7 @@ class AuthService:
         
         # Vérifier que le compte est actif
         if not user.is_active:
-            return None
+            raise ValueError("blocked")
         
         return user
     
@@ -103,7 +106,11 @@ class AuthService:
         """
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": str(user.id)},
+            data={
+                "sub": str(user.id),
+                "role": user.role,  # Inclure le rôle dans le token
+                "email": user.email
+            },
             expires_delta=access_token_expires
         )
         

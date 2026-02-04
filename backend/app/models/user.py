@@ -20,6 +20,7 @@ class User(Base):
     full_name = Column(String(255))
     language = Column(String(10), default="fr")
     is_active = Column(Boolean, default=True)
+    role = Column(String(20), nullable=False, default="user", index=True)  # 'user' or 'admin'
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -30,6 +31,7 @@ class User(Base):
     job_offers = relationship("JobOffer", back_populates="user", cascade="all, delete-orphan")
     applications = relationship("Application", back_populates="user", cascade="all, delete-orphan")
     generated_documents = relationship("GeneratedDocument", back_populates="user", cascade="all, delete-orphan")
+    limits = relationship("UserLimits", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"

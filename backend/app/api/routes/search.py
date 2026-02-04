@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.job_offer import JobOffer
 from app.schemas.search import SearchRequest, SearchResponse, FeedResponse, OfferResponse
 from app.services.search_service import search_service
+from app.services.limit_service import LimitService
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -22,12 +23,33 @@ async def search_with_scraping(
 ):
     """Recherche avec scraping des plateformes"""
     try:
+        # Vérifier la limite de recherches quotidiennes
+        limit_service = LimitService(db)
+        can_proceed, current, max_val = await limit_service.check_limit(
+            user_id=current_user.id,
+            limit_type="searches_today"
+        )
+        
+        if not can_proceed:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Limite de recherches quotidiennes atteinte ({current}/{max_val}). Revenez demain !"
+            )
+        
         result = await search_service.search_with_scraping(
             db=db, keywords=request.keywords, location=request.location,
             job_type=request.job_type, work_mode=request.work_mode,
             company=request.company, limit_per_platform=request.limit_per_platform,
             user_id=str(current_user.id)
         )
+        
+        # Incrémenter le compteur seulement si la recherche a réussi
+        if result.get("success"):
+            await limit_service.increment(
+                user_id=current_user.id,
+                limit_type="searches_today"
+            )
+        
         formatted_offers = [OfferResponse(
             job_title=o.get("job_title", ""), company_name=o.get("company_name", ""),
             location=o.get("location", ""), description=o.get("description", "")[:500],
@@ -47,6 +69,8 @@ async def search_with_scraping(
             duration_seconds=result.get("duration_seconds"),
             message=result.get("message")  # Message d'avertissement/info
         )
+    except HTTPException:
+        raise  # Re-raise limit exceptions
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur scraping: {str(e)}")
 
