@@ -104,3 +104,5 @@ _evidence/
 *.tmp
 *.bak
 GIT
+# Copilot exports that may contain secrets
+copilot-evidence/exports/copilot_cli_all_conversations.md
