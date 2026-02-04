@@ -84,6 +84,7 @@ Thumbs.db
 *.md
 !README.md
 !LICENSE.md
+!copilot-evidence/**/*.md
 
 # Other temporary files
 CV_*.pdf
@@ -92,3 +93,14 @@ test_*.sh
 *.sh
 !backend/**/*.sh
 !frontend/**/*.sh
+
+
+_evidence/
+**/events.jsonl
+**/rewind-snapshots/backups/
+**/*.log
+
+# Local artifacts
+*.tmp
+*.bak
+GIT
