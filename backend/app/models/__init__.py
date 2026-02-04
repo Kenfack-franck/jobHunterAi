@@ -7,6 +7,7 @@ from app.models.job_offer import JobOffer
 from app.models.generated_document import GeneratedDocument
 from app.models.user_source_preferences import UserSourcePreferences
 from app.models.search_cache import SearchResultsCache
+from app.models.user_limits import UserLimits, DEFAULT_LIMITS
 
 __all__ = [
     "User",
@@ -17,5 +18,7 @@ __all__ = [
     "JobOffer",
     "GeneratedDocument",
     "UserSourcePreferences",
-    "SearchResultsCache"
+    "SearchResultsCache",
+    "UserLimits",
+    "DEFAULT_LIMITS"
 ]
