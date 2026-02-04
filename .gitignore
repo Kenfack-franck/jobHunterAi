@@ -85,6 +85,9 @@ Thumbs.db
 !README.md
 !LICENSE.md
 !copilot-evidence/**/*.md
+RESUME_CHECKPOINT.txt
+README.md.old
+
 
 # Other temporary files
 CV_*.pdf
