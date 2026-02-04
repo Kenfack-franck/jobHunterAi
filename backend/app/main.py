@@ -108,7 +108,7 @@ async def health_check():
 
 # Importer et enregistrer les routes
 from app.api import auth, profile, job_offer, analysis, documents, sources
-from app.api.routes import search, company_watch, custom_sources, contact
+from app.api.routes import search, company_watch, custom_sources, contact, admin
 from app.api.v1.endpoints import applications
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -122,3 +122,4 @@ app.include_router(company_watch.router, prefix="/api/v1", tags=["Company Watch"
 app.include_router(custom_sources.router, prefix="/api/v1", tags=["Custom Sources"])
 app.include_router(applications.router, prefix="/api/v1/applications", tags=["Applications"])
 app.include_router(contact.router, prefix="/api/v1/contact", tags=["Contact"])
+app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])

@@ -1,0 +1,337 @@
+"""
+Routes Admin - Gestion des utilisateurs et statistiques
+"""
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from sqlalchemy import func, desc
+from typing import Optional, List
+from datetime import datetime, timedelta
+import uuid
+
+from app.database import get_db
+from app.models.user import User
+from app.models.user_limits import UserLimits
+from app.api.dependencies.admin import require_admin
+from app.services.limit_service import LimitService
+from app.schemas.admin import (
+    UserListResponse,
+    UserDetailResponse,
+    UpdateUserLimitsRequest,
+    UserStatsResponse,
+    AdminDashboardStats
+)
+
+router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+@router.get("/users", response_model=UserListResponse)
+def list_users(
+    search: Optional[str] = Query(None, description="Recherche par email"),
+    status_filter: Optional[str] = Query('all', description="active | blocked | all"),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Liste tous les utilisateurs avec leurs statistiques d'utilisation.
+    Accessible uniquement par les admins.
+    """
+    # Base query
+    query = db.query(User)
+    
+    # Apply filters
+    if search:
+        query = query.filter(User.email.ilike(f"%{search}%"))
+    
+    if status_filter == 'active':
+        query = query.filter(User.is_active == True)
+    elif status_filter == 'blocked':
+        query = query.filter(User.is_active == False)
+    
+    # Get total count
+    total = query.count()
+    
+    # Pagination
+    offset = (page - 1) * per_page
+    users = query.order_by(desc(User.created_at)).offset(offset).limit(per_page).all()
+    
+    # Get usage stats for each user
+    limit_service = LimitService(db)
+    user_data = []
+    
+    for user in users:
+        usage = limit_service.get_user_usage_stats(user.id)
+        
+        user_data.append({
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at,
+            "usage": usage
+        })
+    
+    return {
+        "users": user_data,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+
+@router.get("/users/{user_id}", response_model=UserDetailResponse)
+def get_user_detail(
+    user_id: uuid.UUID,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère les détails complets d'un utilisateur.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Get usage stats
+    limit_service = LimitService(db)
+    usage = limit_service.get_user_usage_stats(user.id)
+    
+    # Get custom limits if any
+    limits = db.query(UserLimits).filter(UserLimits.user_id == user_id).first()
+    custom_limits = {}
+    if limits:
+        for field in ['max_saved_offers', 'max_searches_per_day', 'max_profiles', 
+                      'max_applications', 'max_cv_parses', 'max_watched_companies', 
+                      'max_generated_cv_per_day']:
+            value = getattr(limits, field, None)
+            if value is not None:
+                custom_limits[field] = value
+    
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,
+        "is_active": user.is_active,
+        "language": user.language,
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
+        "usage": usage,
+        "custom_limits": custom_limits if custom_limits else None
+    }
+
+
+@router.put("/users/{user_id}/toggle-active")
+def toggle_user_active(
+    user_id: uuid.UUID,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Bloquer ou débloquer un utilisateur (toggle is_active).
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Don't allow admin to block themselves
+    if user.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous ne pouvez pas vous bloquer vous-même"
+        )
+    
+    # Toggle active status
+    user.is_active = not user.is_active
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "is_active": user.is_active,
+        "message": f"Utilisateur {'activé' if user.is_active else 'bloqué'} avec succès"
+    }
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: uuid.UUID,
+    confirm: str = Query(..., description="Tapez 'yes' pour confirmer"),
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Supprimer complètement un utilisateur et toutes ses données.
+    Nécessite confirmation (confirm=yes).
+    """
+    if confirm != 'yes':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation requise. Ajoutez ?confirm=yes"
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Don't allow admin to delete themselves
+    if user.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous ne pouvez pas supprimer votre propre compte"
+        )
+    
+    # Count related data before deletion (for response)
+    email = user.email
+    profiles_count = 1 if user.profile else 0
+    job_offers_count = len(user.job_offers)
+    applications_count = len(user.applications)
+    
+    # Delete user (CASCADE will delete related data)
+    db.delete(user)
+    db.commit()
+    
+    return {
+        "message": "Utilisateur et toutes ses données supprimés",
+        "email": email,
+        "deleted": {
+            "user": True,
+            "profiles": profiles_count,
+            "job_offers": job_offers_count,
+            "applications": applications_count
+        }
+    }
+
+
+@router.put("/users/{user_id}/limits")
+def update_user_limits(
+    user_id: uuid.UUID,
+    limits_update: UpdateUserLimitsRequest,
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Modifier les limites personnalisées d'un utilisateur.
+    Permet d'augmenter les limites au cas par cas.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Update limits via service
+    limit_service = LimitService(db)
+    
+    custom_limits = {}
+    if limits_update.max_saved_offers is not None:
+        custom_limits['max_saved_offers'] = limits_update.max_saved_offers
+    if limits_update.max_searches_per_day is not None:
+        custom_limits['max_searches_per_day'] = limits_update.max_searches_per_day
+    if limits_update.max_profiles is not None:
+        custom_limits['max_profiles'] = limits_update.max_profiles
+    if limits_update.max_applications is not None:
+        custom_limits['max_applications'] = limits_update.max_applications
+    if limits_update.max_cv_parses is not None:
+        custom_limits['max_cv_parses'] = limits_update.max_cv_parses
+    if limits_update.max_watched_companies is not None:
+        custom_limits['max_watched_companies'] = limits_update.max_watched_companies
+    if limits_update.max_generated_cv_per_day is not None:
+        custom_limits['max_generated_cv_per_day'] = limits_update.max_generated_cv_per_day
+    
+    updated_limits = limit_service.update_custom_limits(
+        user_id=user_id,
+        custom_limits=custom_limits,
+        reason=limits_update.reason
+    )
+    
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "updated_limits": custom_limits,
+        "reason": limits_update.reason,
+        "message": "Limites mises à jour avec succès"
+    }
+
+
+@router.get("/stats", response_model=AdminDashboardStats)
+def get_admin_stats(
+    current_admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Statistiques globales pour le dashboard admin.
+    """
+    # Total users
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.is_active == True).count()
+    blocked_users = db.query(User).filter(User.is_active == False).count()
+    
+    # New users this week
+    week_ago = datetime.now() - timedelta(days=7)
+    new_users_this_week = db.query(User).filter(
+        User.created_at >= week_ago
+    ).count()
+    
+    # New users today
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    new_users_today = db.query(User).filter(
+        User.created_at >= today_start
+    ).count()
+    
+    # Users near limit (>= 90%)
+    limit_service = LimitService(db)
+    all_users = db.query(User).all()
+    users_near_limit = []
+    
+    for user in all_users:
+        usage = limit_service.get_user_usage_stats(user.id)
+        max_percentage = max([stat['percentage'] for stat in usage.values()])
+        
+        if max_percentage >= 90:
+            users_near_limit.append({
+                "email": user.email,
+                "usage": f"{max_percentage}%"
+            })
+    
+    # Registrations last 7 days
+    registrations_last_7_days = {}
+    for i in range(7):
+        day = datetime.now() - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        count = db.query(User).filter(
+            User.created_at >= day_start,
+            User.created_at < day_end
+        ).count()
+        
+        registrations_last_7_days[day.strftime('%Y-%m-%d')] = count
+    
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "blocked_users": blocked_users,
+        "new_users_this_week": new_users_this_week,
+        "new_users_today": new_users_today,
+        "users_near_limit": users_near_limit,
+        "registrations_last_7_days": registrations_last_7_days
+    }
