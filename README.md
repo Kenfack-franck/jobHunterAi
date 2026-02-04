@@ -513,7 +513,7 @@ npm run dev
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@jobhunter.com | Admin123! |
-| User | test@test.com | Test123! |
+
 
 **Demo Features:**
 - Upload a sample CV to test AI parsing
