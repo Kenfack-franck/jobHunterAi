@@ -55,21 +55,31 @@ async def login(
     Returns:
         Token JWT à utiliser dans le header Authorization: Bearer <token>
     """
-    user = await AuthService.authenticate_user(
-        db,
-        credentials.email,
-        credentials.password
-    )
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou mot de passe incorrect",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        user = await AuthService.authenticate_user(
+            db,
+            credentials.email,
+            credentials.password
         )
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email ou mot de passe incorrect",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        token = AuthService.create_token_for_user(user)
+        return token
     
-    token = AuthService.create_token_for_user(user)
-    return token
+    except ValueError as e:
+        if str(e) == "blocked":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Votre compte a été bloqué par un administrateur. Veuillez contacter kenfackfranck08@gmail.com pour plus d'informations.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        raise
 
 
 @router.get("/me", response_model=UserResponse)

@@ -69,6 +69,9 @@ class AuthService:
             
         Returns:
             User si authentification réussie, None sinon
+            
+        Raises:
+            ValueError: Si le compte est bloqué
         """
         # Récupérer l'utilisateur
         result = await db.execute(
@@ -85,7 +88,7 @@ class AuthService:
         
         # Vérifier que le compte est actif
         if not user.is_active:
-            return None
+            raise ValueError("blocked")
         
         return user
     
