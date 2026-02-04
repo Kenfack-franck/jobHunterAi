@@ -27,7 +27,8 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 @router.get("/users", response_model=UserListResponse)
 async def list_users(
     search: Optional[str] = Query(None, description="Recherche par email"),
-    status_filter: Optional[str] = Query('all', description="active | blocked | all"),
+    role: Optional[str] = Query(None, description="user | admin"),
+    is_active: Optional[bool] = Query(None, description="true | false"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_admin: User = Depends(require_admin),
@@ -44,10 +45,11 @@ async def list_users(
     if search:
         stmt = stmt.where(User.email.ilike(f"%{search}%"))
     
-    if status_filter == 'active':
-        stmt = stmt.where(User.is_active == True)
-    elif status_filter == 'blocked':
-        stmt = stmt.where(User.is_active == False)
+    if role:
+        stmt = stmt.where(User.role == role)
+    
+    if is_active is not None:
+        stmt = stmt.where(User.is_active == is_active)
     
     # Get total count
     count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -214,11 +216,8 @@ async def delete_user(
             detail="Vous ne pouvez pas supprimer votre propre compte"
         )
     
-    # Count related data before deletion (for response)
+    # Store email for response
     email = user.email
-    profiles_count = 1 if user.profile else 0
-    job_offers_count = len(user.job_offers) if user.job_offers else 0
-    applications_count = len(user.applications) if user.applications else 0
     
     # Delete user (CASCADE will delete related data)
     await db.delete(user)
@@ -228,10 +227,7 @@ async def delete_user(
         "message": "Utilisateur et toutes ses données supprimés",
         "email": email,
         "deleted": {
-            "user": True,
-            "profiles": profiles_count,
-            "job_offers": job_offers_count,
-            "applications": applications_count
+            "user": True
         }
     }
 
