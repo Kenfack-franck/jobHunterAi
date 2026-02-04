@@ -16,6 +16,7 @@ from app.schemas.job_offer import (
     JobOfferSearchParams
 )
 from app.services.job_offer_service import JobOfferService
+from app.services.limit_service import LimitService
 from app.core.dependencies import get_current_user
 
 
@@ -46,11 +47,32 @@ async def create_job_offer(
     db: AsyncSession = Depends(get_db)
 ):
     """Créer une nouvelle offre d'emploi"""
+    # Vérifier la limite saved_offers
+    limit_service = LimitService(db)
+    can_proceed, current, max_val = await limit_service.check_limit(
+        user_id=current_user.id,
+        limit_type="saved_offers"
+    )
+    
+    if not can_proceed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limite d'offres sauvegardées atteinte ({current}/{max_val}). Plan gratuit limité à {max_val} offres."
+        )
+    
+    # Créer l'offre
     offer = await JobOfferService.create_job_offer(
         db,
         user_id=current_user.id,
         data=data
     )
+    
+    # Incrémenter le compteur
+    await limit_service.increment(
+        user_id=current_user.id,
+        limit_type="saved_offers"
+    )
+    
     return offer
 
 

@@ -12,6 +12,7 @@ from app.models.user import User
 from app.services.profile_service import ProfileService
 from app.services.cv_parser_service import CVParserService
 from app.services.ai_service import AIService
+from app.services.limit_service import LimitService
 from app.schemas.profile import (
     ProfileCreate, ProfileUpdate, ProfileResponse,
     ExperienceCreate, ExperienceUpdate, ExperienceResponse,
@@ -66,7 +67,21 @@ async def create_profile(
         
     Raises:
         400: Si un profil existe déjà
+        429: Si limite de profils atteinte
     """
+    # Vérifier la limite de profils
+    limit_service = LimitService(db)
+    can_proceed, current_count, max_val = await limit_service.check_limit(
+        user_id=current_user.id,
+        limit_type="profiles"
+    )
+    
+    if not can_proceed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limite de profils atteinte ({current_count}/{max_val}). Plan gratuit limité à {max_val} profils."
+        )
+    
     # Debug: log received data
     import logging
     logger = logging.getLogger(__name__)
@@ -74,6 +89,13 @@ async def create_profile(
     logger.info(f"Received data: title={data.title}, exp={len(data.experiences or [])}, edu={len(data.educations or [])}, skills={len(data.skills or [])}")
     
     profile = await ProfileService.create_profile(current_user.id, data, db)
+    
+    # Incrémenter le compteur
+    await limit_service.increment(
+        user_id=current_user.id,
+        limit_type="profiles"
+    )
+    
     return profile
 
 
