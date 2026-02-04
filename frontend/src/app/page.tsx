@@ -121,13 +121,13 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tight">
                 Décrochez votre<br />
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  job idéal
+                  job/stage idéal
                 </span>
                 <br />en 10x moins de temps
               </h1>
               
               <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0">
-                L'IA qui automatise votre recherche d'emploi de A à Z. Scraping intelligent, documents personnalisés, candidatures en 1 clic.
+                L'IA qui automatise votre recherche d'emploi/stage de A à Z. Scraping intelligent, documents personnalisés, candidatures en 1 clic.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
