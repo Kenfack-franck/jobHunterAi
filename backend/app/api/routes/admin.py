@@ -146,7 +146,11 @@ async def toggle_user_active(
     """
     Bloquer ou débloquer un utilisateur (toggle is_active).
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    from sqlalchemy import select
+    
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(
@@ -163,8 +167,8 @@ async def toggle_user_active(
     
     # Toggle active status
     user.is_active = not user.is_active
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     
     return {
         "user_id": str(user.id),
@@ -185,13 +189,17 @@ async def delete_user(
     Supprimer complètement un utilisateur et toutes ses données.
     Nécessite confirmation (confirm=yes).
     """
+    from sqlalchemy import select, delete as sql_delete
+    
     if confirm != 'yes':
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Confirmation requise. Ajoutez ?confirm=yes"
         )
     
-    user = db.query(User).filter(User.id == user_id).first()
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(
@@ -209,12 +217,12 @@ async def delete_user(
     # Count related data before deletion (for response)
     email = user.email
     profiles_count = 1 if user.profile else 0
-    job_offers_count = len(user.job_offers)
-    applications_count = len(user.applications)
+    job_offers_count = len(user.job_offers) if user.job_offers else 0
+    applications_count = len(user.applications) if user.applications else 0
     
     # Delete user (CASCADE will delete related data)
-    db.delete(user)
-    db.commit()
+    await db.delete(user)
+    await db.commit()
     
     return {
         "message": "Utilisateur et toutes ses données supprimés",
@@ -225,59 +233,6 @@ async def delete_user(
             "job_offers": job_offers_count,
             "applications": applications_count
         }
-    }
-
-
-@router.put("/users/{user_id}/limits")
-async def update_user_limits(
-    user_id: uuid.UUID,
-    limits_update: UpdateUserLimitsRequest,
-    current_admin: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Modifier les limites personnalisées d'un utilisateur.
-    Permet d'augmenter les limites au cas par cas.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Utilisateur non trouvé"
-        )
-    
-    # Update limits via service
-    limit_service = LimitService(db)
-    
-    custom_limits = {}
-    if limits_update.max_saved_offers is not None:
-        custom_limits['max_saved_offers'] = limits_update.max_saved_offers
-    if limits_update.max_searches_per_day is not None:
-        custom_limits['max_searches_per_day'] = limits_update.max_searches_per_day
-    if limits_update.max_profiles is not None:
-        custom_limits['max_profiles'] = limits_update.max_profiles
-    if limits_update.max_applications is not None:
-        custom_limits['max_applications'] = limits_update.max_applications
-    if limits_update.max_cv_parses is not None:
-        custom_limits['max_cv_parses'] = limits_update.max_cv_parses
-    if limits_update.max_watched_companies is not None:
-        custom_limits['max_watched_companies'] = limits_update.max_watched_companies
-    if limits_update.max_generated_cv_per_day is not None:
-        custom_limits['max_generated_cv_per_day'] = limits_update.max_generated_cv_per_day
-    
-    updated_limits = limit_service.update_custom_limits(
-        user_id=user_id,
-        custom_limits=custom_limits,
-        reason=limits_update.reason
-    )
-    
-    return {
-        "user_id": str(user.id),
-        "email": user.email,
-        "updated_limits": custom_limits,
-        "reason": limits_update.reason,
-        "message": "Limites mises à jour avec succès"
     }
 
 

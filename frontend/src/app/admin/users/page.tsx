@@ -8,7 +8,6 @@ import {
   UserCheck, 
   UserX, 
   Trash2,
-  Settings,
   ArrowLeft,
   Shield,
   ShieldAlert
@@ -29,10 +28,6 @@ export default function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'user' | 'admin' | ''>('');
   const [statusFilter, setStatusFilter] = useState<boolean | ''>('');
-
-  // Modal states
-  const [showLimitsModal, setShowLimitsModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -278,16 +273,6 @@ export default function AdminUsers() {
                                 ) : (
                                   <UserCheck className="w-4 h-4 text-green-600" />
                                 )}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowLimitsModal(true);
-                                }}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                title="Modifier les limites"
-                              >
-                                <Settings className="w-4 h-4 text-blue-600" />
                               </button>
                               <button
                                 onClick={() => handleDelete(user.id, user.email)}

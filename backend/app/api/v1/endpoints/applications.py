@@ -16,6 +16,7 @@ from app.schemas.application import (
     ApplicationStats
 )
 from app.services.application_service import ApplicationService
+from app.services.limit_service import LimitService
 
 router = APIRouter()
 
@@ -27,11 +28,31 @@ async def create_application(
     current_user: User = Depends(get_current_user)
 ):
     """Créer une nouvelle candidature"""
+    # Vérifier la limite de candidatures
+    limit_service = LimitService(db)
+    can_proceed, current_count, max_val = await limit_service.check_limit(
+        user_id=current_user.id,
+        limit_type="applications"
+    )
+    
+    if not can_proceed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Limite de candidatures atteinte ({current_count}/{max_val}). Plan gratuit limité à {max_val} candidatures."
+        )
+    
     application = await ApplicationService.create_application(
         db=db,
         user_id=current_user.id,
         application_data=application_data
     )
+    
+    # Incrémenter le compteur
+    await limit_service.increment(
+        user_id=current_user.id,
+        limit_type="applications"
+    )
+    
     return application
 
 

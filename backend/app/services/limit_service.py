@@ -49,6 +49,11 @@ class LimitService:
         Returns:
             Tuple (can_proceed: bool, current: int, max_limit: int)
         """
+        # Check if user is admin - admins have unlimited access
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if user and user.role == 'admin':
+            return True, 0, 999999
+        
         limits = self.get_or_create_limits(user_id)
         
         # Reset daily counters if needed
@@ -71,6 +76,11 @@ class LimitService:
             user_id: ID de l'utilisateur
             limit_type: Type de limite à incrémenter
         """
+        # Skip increment for admins
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if user and user.role == 'admin':
+            return
+        
         limits = self.get_or_create_limits(user_id)
         
         # Increment the appropriate counter
