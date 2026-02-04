@@ -38,7 +38,7 @@ class LimitService:
         
         return limits
     
-    def check_limit(self, user_id: uuid.UUID, limit_type: str) -> Tuple[bool, int, int]:
+    async def check_limit(self, user_id: uuid.UUID, limit_type: str) -> Tuple[bool, int, int]:
         """
         Vérifie si l'utilisateur peut encore faire une action.
         
@@ -49,8 +49,13 @@ class LimitService:
         Returns:
             Tuple (can_proceed: bool, current: int, max_limit: int)
         """
+        from sqlalchemy import select
+        
         # Check if user is admin - admins have unlimited access
-        user = self.db.query(User).filter(User.id == user_id).first()
+        stmt = select(User).where(User.id == user_id)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+        
         if user and user.role == 'admin':
             return True, 0, 999999
         
@@ -58,7 +63,7 @@ class LimitService:
         
         # Reset daily counters if needed
         limits.reset_daily_if_needed()
-        self.db.commit()
+        await self.db.commit()
         
         # Get current count and limit
         current = limits.get_current(limit_type)
@@ -68,7 +73,7 @@ class LimitService:
         
         return can_proceed, current, max_limit
     
-    def increment(self, user_id: uuid.UUID, limit_type: str) -> None:
+    async def increment(self, user_id: uuid.UUID, limit_type: str) -> None:
         """
         Incrémente le compteur après une action réussie.
         
@@ -76,8 +81,13 @@ class LimitService:
             user_id: ID de l'utilisateur
             limit_type: Type de limite à incrémenter
         """
+        from sqlalchemy import select
+        
         # Skip increment for admins
-        user = self.db.query(User).filter(User.id == user_id).first()
+        stmt = select(User).where(User.id == user_id)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+        
         if user and user.role == 'admin':
             return
         
@@ -96,7 +106,7 @@ class LimitService:
             limits.last_cv_generation_date = today
         
         limits.updated_at = datetime.now()
-        self.db.commit()
+        await self.db.commit()
         
         # Check if we need to send alerts
         self.check_and_send_alerts(user_id, limit_type)
