@@ -318,29 +318,6 @@ export default function AdminUsers() {
           </>
         )}
       </div>
-
-      {/* Modal Limites - À implémenter */}
-      {showLimitsModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Modifier les limites - {selectedUser.email}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Fonctionnalité à venir : Modification des limites personnalisées
-            </p>
-            <button
-              onClick={() => {
-                setShowLimitsModal(false);
-                setSelectedUser(null);
-              }}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-            >
-              Fermer
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
