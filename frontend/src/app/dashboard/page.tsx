@@ -197,10 +197,10 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-600 mb-4">Générez des candidatures adaptées avec l&apos;IA</p>
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs text-indigo-600 font-medium">Bientôt disponible</span>
+                <span className="text-xs text-indigo-600 font-medium">Disponible</span>
               </div>
               <Button variant="outline" className="w-full" disabled>
-                Phase 4
+                Enregistrez des offres pour generer
               </Button>
             </CardContent>
           </Card>
