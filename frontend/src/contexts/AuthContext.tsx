@@ -57,6 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(user));
       }
+    } catch (error) {
+      setIsLoading(false);
+      throw error; // Re-throw pour que la page login puisse catch
     } finally {
       setIsLoading(false);
     }

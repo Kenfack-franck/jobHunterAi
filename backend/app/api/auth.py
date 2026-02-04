@@ -65,7 +65,7 @@ async def login(
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email ou mot de passe incorrect",
+                detail="Identifiants incorrects. Vérifiez votre email et mot de passe.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         
