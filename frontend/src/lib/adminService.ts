@@ -2,7 +2,7 @@
  * Service Admin - Gestion des utilisateurs et statistiques
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface UsageStats {
   current: number;
@@ -89,7 +89,7 @@ class AdminService {
     if (filters.page) params.append('page', String(filters.page));
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     
-    const response = await fetch(`${API_URL}/api/v1/admin/users?${params}`, {
+    const response = await fetch(`${API_URL}/admin/users?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -109,7 +109,7 @@ class AdminService {
   async getUserDetail(userId: string): Promise<UserDetailResponse> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}/api/v1/admin/users/${userId}`, {
+    const response = await fetch(`${API_URL}/admin/users/${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -129,7 +129,7 @@ class AdminService {
   async toggleUserActive(userId: string): Promise<UserDetailResponse> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}/api/v1/admin/users/${userId}/toggle-active`, {
+    const response = await fetch(`${API_URL}/admin/users/${userId}/toggle-active`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -150,7 +150,7 @@ class AdminService {
   async deleteUser(userId: string): Promise<void> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}/api/v1/admin/users/${userId}?confirm=yes`, {
+    const response = await fetch(`${API_URL}/admin/users/${userId}?confirm=yes`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -169,7 +169,7 @@ class AdminService {
   async updateUserLimits(userId: string, limits: UpdateLimitsRequest): Promise<UserDetailResponse> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}/api/v1/admin/users/${userId}/limits`, {
+    const response = await fetch(`${API_URL}/admin/users/${userId}/limits`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -192,7 +192,7 @@ class AdminService {
   async getDashboardStats(): Promise<AdminDashboardStats> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}/api/v1/admin/stats`, {
+    const response = await fetch(`${API_URL}/admin/stats`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
