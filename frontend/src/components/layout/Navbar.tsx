@@ -1,10 +1,10 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { Button } from '@/components/ui/button';
-import { Bell, HelpCircle, User, LogOut, Settings, Menu } from 'lucide-react';
+import { Bell, HelpCircle, User, LogOut, Settings, Menu, Shield } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +120,20 @@ export function Navbar() {
 function MobileNav({ onClose, logout }: { onClose: () => void; logout: () => void }) {
   const { user } = useAuth();
   const { completion } = useProfile();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Vérifier si l'utilisateur est admin
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setIsAdmin(payload.role === 'admin');
+      }
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -139,6 +153,16 @@ function MobileNav({ onClose, logout }: { onClose: () => void; logout: () => voi
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4">
         <div className="space-y-1">
+          {/* Admin Panel si admin */}
+          {isAdmin && (
+            <Link href="/admin" onClick={onClose}>
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg mb-2">
+                <Shield className="h-5 w-5" />
+                <span className="text-sm font-bold">Admin Panel</span>
+              </div>
+            </Link>
+          )}
+          
           <MobileNavLink href="/dashboard" icon="📊" label="Dashboard" onClick={onClose} />
           <MobileNavLink href="/jobs" icon="🔍" label="Recherche d'offres" onClick={onClose} />
           <MobileNavLink href="/settings/sources" icon="🏢" label="Sources" onClick={onClose} />
