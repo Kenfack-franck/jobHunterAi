@@ -1,9 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Search, Briefcase, FileText, Eye, Settings, ChevronLeft, ChevronRight, Building2, HelpCircle } from 'lucide-react';
+import { Home, Search, Briefcase, FileText, Eye, Settings, ChevronLeft, ChevronRight, Building2, HelpCircle, Shield } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Accueil', icon: Home },
@@ -18,7 +18,21 @@ const navItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Vérifier si l'utilisateur est admin via le token
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setIsAdmin(payload.role === 'admin');
+      }
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+    }
+  }, []);
 
   return (
     <aside className={cn(
@@ -28,6 +42,24 @@ export function Sidebar() {
       <div className="flex flex-col h-full">
         {/* Navigation */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {/* Admin link si utilisateur est admin */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                pathname?.startsWith('/admin') 
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg" 
+                  : "text-purple-700 bg-purple-50 hover:bg-purple-100 border-2 border-purple-200",
+                collapsed && "justify-center"
+              )}
+              title={collapsed ? "Admin" : undefined}
+            >
+              <Shield className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span className="text-sm font-bold">Admin Panel</span>}
+            </Link>
+          )}
+          
           {navItems.map((item) => {
             // Éviter que /settings soit actif quand on est sur /settings/sources
             const isActive = pathname === item.href || 
